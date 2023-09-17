@@ -42,7 +42,7 @@ const nextDates = computed(() => calculateNextDates(scheduleExpression.value));
     </div>
     <form>
       <fieldset>
-        <input type="text" v-model="scheduleExpression" />
+        <input type="text" required v-model="scheduleExpression" />
         <button :class="{ bookmarked: isBookmarked }" type="button">
           <font-awesome-icon
             :icon="[isBookmarked ? 'fas' : 'far', 'bookmark']"
@@ -91,12 +91,22 @@ form {
   justify-content: center;
 }
 
+form:invalid > fieldset {
+  border-color: #e74c3c;
+}
+
+form:valid > fieldset {
+  border-color: #2ecc71;
+}
+
 fieldset {
   display: flex;
   justify-items: center;
+  border-color: currentColor;
   border-radius: 8px;
   border-width: 4px;
   background: #1f1f1f;
+  transition: border-color 0.3s ease;
 }
 
 input {
