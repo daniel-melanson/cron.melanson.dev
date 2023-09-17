@@ -41,13 +41,17 @@ const nextDates = computed(() => calculateNextDates(scheduleExpression.value));
       </ol>
     </div>
     <form>
-      <Select />
       <input type="text" v-model="scheduleExpression" />
     </form>
   </main>
 </template>
 
 <style scoped>
+div {
+  display: flex;
+  flex-direction: column;
+}
+
 .scheduleDescription,
 .nextDates {
   text-align: center;
@@ -72,7 +76,6 @@ ol {
 }
 
 form {
-  /* background-color: #; */
   display: grid;
   grid-template-rows: 2em 2em, 5em, auto;
 }
