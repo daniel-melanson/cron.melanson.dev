@@ -1,6 +1,8 @@
 <template>
   <footer>
-    <a href="/cron">unix man page</a>
+    <a href="https://crontab.guru/crontab.5.html" target="_blank"
+      >unix man page</a
+    >
     <a
       href="http://www.quartz-scheduler.org/documentation/quartz-2.3.0/tutorials/crontrigger.html"
       target="_blank"
