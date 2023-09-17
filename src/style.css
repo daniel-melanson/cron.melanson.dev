@@ -1,8 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=Ubuntu+Mono&display=swap');
+
+html,
 body {
-  background: #252422;
-  color: #fffcf2;
+  font-family: 'Ubuntu Mono', monospace;
+  margin: 0;
+  background: #292929;
+  color: #fff;
 }
 
 a {
-  color: #fffcf2;
+  color: currentColor;
 }
