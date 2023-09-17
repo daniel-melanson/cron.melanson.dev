@@ -38,5 +38,21 @@ p {
 a {
   font-style: italic;
   text-decoration: none;
+  position: relative;
+}
+
+a::after {
+  content: "";
+  position: absolute;
+  bottom: 0px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0px;
+  border-bottom: 2px solid currentColor;
+  transition: width 0.3s ease;
+}
+
+a:hover::after {
+  width: 100%;
 }
 </style>
