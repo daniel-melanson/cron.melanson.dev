@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 
 function describeExpression(expression: string): string {
   return "At 12:00 on every 2nd day-of-month.";
@@ -15,12 +15,20 @@ function calculateNextDates(expression: string): string[] {
   ];
 }
 
-const showNextDates = ref(false);
+const formElement = ref<HTMLFormElement | null>(null);
 const scheduleExpression = ref("0 12 */2 * * *");
+
+const isValid = ref(true);
+function checkValidity() {
+  return Boolean(formElement.value && formElement.value.checkValidity());
+}
+
 const isBookmarked = computed(() => false);
 const scheduleDescription = computed(() =>
   describeExpression(scheduleExpression.value)
 );
+
+const showNextDates = ref(false);
 const nextDates = computed(() => calculateNextDates(scheduleExpression.value));
 </script>
 
@@ -40,17 +48,29 @@ const nextDates = computed(() => calculateNextDates(scheduleExpression.value));
         </template>
       </ol>
     </div>
-    <form>
+    <form ref="formElement">
       <fieldset>
-        <input type="text" required v-model="scheduleExpression" />
-        <button :class="{ bookmarked: isBookmarked }" type="button">
+        <input
+          type="text"
+          required
+          v-model="scheduleExpression"
+          @input="isValid = checkValidity()"
+        />
+        <button
+          :class="{ bookmarked: isBookmarked }"
+          type="button"
+          :disabled="!isValid"
+        >
           <font-awesome-icon
             :icon="[isBookmarked ? 'fas' : 'far', 'bookmark']"
             size="lg"
           />
         </button>
-        <button type="button">
-          <font-awesome-icon :icon="['far', 'clipboard']" size="lg" />
+        <button type="button" :disabled="!isValid">
+          <font-awesome-icon
+            :icon="['far', 'clipboard']"
+            size="lg"
+          />
         </button>
       </fieldset>
     </form>
@@ -91,11 +111,12 @@ form {
   justify-content: center;
 }
 
-form:invalid > fieldset {
+form:invalid * {
   border-color: #e74c3c;
+  color: #e74c3c;
 }
 
-form:valid > fieldset {
+form:valid * {
   border-color: #2ecc71;
 }
 
