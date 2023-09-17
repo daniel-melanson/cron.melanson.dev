@@ -10,11 +10,13 @@
       aws
       <a
         href="https://docs.aws.amazon.com/systems-manager/latest/userguide/reference-cron-and-rate-expressions.html"
+        target="_blank"
         >basic</a
       >
       and
       <a
         href="https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-create-rule-schedule.html"
+        target="_blank"
         >extended</a
       >
       cron reference
