@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed } from "vue";
+import { isBookmarked, addBookmark, removeBookmark } from "../storage.ts";
 
 function describeExpression(expression: string): string {
   return "At 12:00 on every 2nd day-of-month.";
@@ -19,15 +20,31 @@ const formElement = ref<HTMLFormElement | null>(null);
 const scheduleExpression = ref("0 12 */2 * * *");
 
 const isValid = ref(true);
-function checkValidity() {
-  return Boolean(formElement.value && formElement.value.checkValidity());
+
+// Bookmarks
+const isExpressionBookmarked = ref(isBookmarked(scheduleExpression.value));
+function onInput() {
+  isValid.value = Boolean(formElement.value?.checkValidity());
+  updateIsBookmarked();
 }
 
-const isBookmarked = computed(() => false);
+function updateIsBookmarked() {
+  isExpressionBookmarked.value = isValid.value && isBookmarked(scheduleExpression.value);
+}
+
+function toggleBookmark() {
+  if (isExpressionBookmarked.value) {
+    removeBookmark(scheduleExpression.value);
+  } else {
+    addBookmark(scheduleExpression.value);
+  }
+
+  updateIsBookmarked();
+}
+
 const scheduleDescription = computed(() =>
   describeExpression(scheduleExpression.value)
 );
-
 const showNextDates = ref(false);
 const nextDates = computed(() => calculateNextDates(scheduleExpression.value));
 </script>
@@ -54,15 +71,16 @@ const nextDates = computed(() => calculateNextDates(scheduleExpression.value));
           type="text"
           required
           v-model="scheduleExpression"
-          @input="isValid = checkValidity()"
+          @input="onInput"
         />
         <button
-          :class="{ bookmarked: isBookmarked }"
+          :class="{ bookmarked: isExpressionBookmarked }"
           type="button"
           :disabled="!isValid"
+          @click="toggleBookmark"
         >
           <font-awesome-icon
-            :icon="[isBookmarked ? 'fas' : 'far', 'bookmark']"
+            :icon="[isExpressionBookmarked ? 'fas' : 'far', 'bookmark']"
             size="lg"
           />
         </button>
