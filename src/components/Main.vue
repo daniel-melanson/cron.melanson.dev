@@ -122,6 +122,7 @@ button,
 .bookmarked:hover {
   color: currentColor;
 }
+
 button:hover,
 .bookmarked {
   color: #3498db;
