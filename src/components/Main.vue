@@ -67,10 +67,7 @@ const nextDates = computed(() => calculateNextDates(scheduleExpression.value));
           />
         </button>
         <button type="button" :disabled="!isValid">
-          <font-awesome-icon
-            :icon="['far', 'clipboard']"
-            size="lg"
-          />
+          <font-awesome-icon :icon="['far', 'clipboard']" size="lg" />
         </button>
       </fieldset>
     </form>
