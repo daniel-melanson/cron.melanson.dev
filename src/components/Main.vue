@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import Select from "./Select.vue";
 
 function describeExpression(expression: string): string {
   return "At 12:00 on every 2nd day-of-month.";
@@ -18,6 +17,7 @@ function calculateNextDates(expression: string): string[] {
 
 const showNextDates = ref(false);
 const scheduleExpression = ref("0 12 */2 * * *");
+const isBookmarked = computed(() => false);
 const scheduleDescription = computed(() =>
   describeExpression(scheduleExpression.value)
 );
@@ -41,7 +41,18 @@ const nextDates = computed(() => calculateNextDates(scheduleExpression.value));
       </ol>
     </div>
     <form>
-      <input type="text" v-model="scheduleExpression" />
+      <fieldset>
+        <input type="text" v-model="scheduleExpression" />
+        <button :class="{ bookmarked: isBookmarked }" type="button">
+          <font-awesome-icon
+            :icon="[isBookmarked ? 'fas' : 'far', 'bookmark']"
+            size="lg"
+          />
+        </button>
+        <button type="button">
+          <font-awesome-icon :icon="['far', 'clipboard']" size="lg" />
+        </button>
+      </fieldset>
     </form>
   </main>
 </template>
@@ -76,13 +87,20 @@ ol {
 }
 
 form {
-  display: grid;
-  grid-template-rows: 2em 2em, 5em, auto;
+  display: flex;
+  justify-content: center;
+}
+
+fieldset {
+  display: flex;
+  justify-items: center;
+  border-radius: 8px;
+  border-width: 4px;
+  background: #1f1f1f;
 }
 
 input {
   background: none;
-  margin: 36px 18px;
   border: none;
   color: currentColor;
   font-size: 36px;
@@ -91,5 +109,21 @@ input {
 
 input:focus {
   outline: none;
+}
+
+button {
+  background: none;
+  border: none;
+  transition: color 0.3s ease;
+  margin: 0px 0.25em;
+}
+
+button,
+.bookmarked:hover {
+  color: currentColor;
+}
+button:hover,
+.bookmarked {
+  color: #3498db;
 }
 </style>
