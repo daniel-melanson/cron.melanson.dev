@@ -5,20 +5,39 @@ function sync(): void {
   window.localStorage.setItem(KEY, JSON.stringify(storage));
 }
 
-export function isBookmarked(key: string): boolean {
+function checkKeyMembership(key: string): boolean {
   return key in storage;
 }
 
-export function addBookmark(key: string): void {
-  if (isBookmarked(key)) return;
+function usingKey(f: (key: string) => void): (value: string) => void {
+  return (value) => {
+    const key = value.toUpperCase().trim();
 
-  storage[key] = true;
-  sync();
+    f(key);
+  };
 }
 
-export function removeBookmark(key: string): void {
-  if (!isBookmarked(key)) return;
+function applyMembershipUpdate(
+  membershipRequirement: boolean,
+  f: (key: string) => void
+): (value: string) => void {
+  return usingKey((key) => {
+    if (checkKeyMembership(key) !== membershipRequirement) return;
 
-  delete storage[key];
-  sync();
+    f(key);
+
+    sync();
+  });
 }
+
+export const isBookmarked = usingKey(checkKeyMembership);
+
+export const addBookmark = applyMembershipUpdate(
+  false,
+  (key) => (storage[key] = true)
+);
+
+export const removeBookmark = applyMembershipUpdate(
+  true,
+  (key) => delete storage[key]
+);
