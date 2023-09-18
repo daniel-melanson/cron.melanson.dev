@@ -24,13 +24,22 @@ import Footer from "./components/Footer.vue";
   flex-direction: column;
 }
 
-#snackbar-container p {
+.snackbar-item.success {
+  border-color: var(--color-blue);
+}
+
+.snackbar-item.failure {
+  border-color: var(--color-red);
+}
+
+.snackbar-item {
   background-color: var(--color-dark-grey);
-  border: 2px solid var(--color-blue);
+  border-width: 2px;
+  border-style: solid;
   border-radius: 4px;
   padding: 0.75em;
   margin: 0.25em;
-  transition: opacity 0.3s ease 1s;
+  transition: opacity 0.3s ease;
 }
 
 .icon-button {

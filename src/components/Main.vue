@@ -42,10 +42,10 @@ async function copyExpression() {
   try {
     await navigator.clipboard.writeText(expression);
   } catch (err) {
-    // TODO
+    createSnackbar("failure", "Could not copy to clipboard.");
   }
 
-  createSnackbar(`Copied '${expression}' to clipboard.`);
+  createSnackbar("success", `Copied '${expression}' to clipboard.`);
 }
 
 const scheduleDescription = computed(() =>
