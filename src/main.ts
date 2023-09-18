@@ -1,5 +1,4 @@
 import { createApp } from "vue";
-import App from "./App.vue";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { library } from "@fortawesome/fontawesome-svg-core";
 import {
@@ -11,6 +10,8 @@ import {
   faClipboard as fasClipboard,
 } from "@fortawesome/free-solid-svg-icons";
 import "./style.css";
+
+import App from "./App.vue";
 
 library.add(fasClipboard, fasBookmark, farClipboard, farBookmark);
 

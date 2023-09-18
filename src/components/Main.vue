@@ -8,27 +8,14 @@ import {
 } from "../storage.ts";
 import IconButton from "./IconButton.vue";
 import IconCheckbox from "./IconCheckbox.vue";
-
-function describeExpression(expression: string): string {
-  return "At 12:00 on every 2nd day-of-month.";
-}
-
-function calculateNextDates(expression: string): string[] {
-  return [
-    "2023-10-02 12:00:00",
-    "2023-10-04 12:00:00",
-    "2023-10-06 12:00:00",
-    "2023-10-08 12:00:00",
-    "2023-10-10 12:00:00",
-  ];
-}
+import { calculateNextDates, describeExpression } from "../cron.ts";
+import { createSnackbar } from "../snackbar.ts";
 
 const formElement = ref<HTMLFormElement | null>(null);
 const scheduleExpression = ref("0 12 */2 * * *");
 
 const isValid = ref(true);
 
-// Bookmarks
 const isExpressionBookmarked = ref(isBookmarked(scheduleExpression.value));
 function onInput() {
   isValid.value = Boolean(formElement.value?.checkValidity());
@@ -51,11 +38,14 @@ function toggleBookmark() {
 }
 
 async function copyExpression() {
+  const expression = hashBookmark(scheduleExpression.value);
   try {
-    await navigator.clipboard.writeText(hashBookmark(scheduleExpression.value));
+    await navigator.clipboard.writeText(expression);
   } catch (err) {
     // TODO
   }
+
+  createSnackbar(`Copied '${expression}' to clipboard.`);
 }
 
 const scheduleDescription = computed(() =>
