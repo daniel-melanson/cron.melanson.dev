@@ -1,7 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Ubuntu+Mono&display=swap");
 
 :root {
-  --color-white: #ffffff
+  --color-white: #fff;
   --color-red: #e74c3c;
   --color-blue: #3498db;
   --color-green: #2ecc71;
@@ -14,7 +14,7 @@ body {
   font-family: "Ubuntu Mono", monospace;
   margin: 0;
   background: var(--color-grey);
-  color: #fff;
+  color: var(--color-white);
 }
 
 a {
