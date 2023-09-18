@@ -9,11 +9,11 @@ function checkKeyMembership(key: string): boolean {
   return key in storage;
 }
 
-function usingKey(f: (key: string) => void): (value: string) => void {
+function usingKey<T>(f: (key: string) => T): (value: string) => T {
   return (value) => {
     const key = value.toUpperCase().trim();
 
-    f(key);
+    return f(key);
   };
 }
 
@@ -30,6 +30,7 @@ function applyMembershipUpdate(
   });
 }
 
+export const hashBookmark = usingKey((key) => key);
 export const isBookmarked = usingKey(checkKeyMembership);
 
 export const addBookmark = applyMembershipUpdate(

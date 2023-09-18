@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { isBookmarked, addBookmark, removeBookmark } from "../storage.ts";
+import {
+  isBookmarked,
+  addBookmark,
+  removeBookmark,
+  hashBookmark,
+} from "../storage.ts";
 import IconButton from "./IconButton.vue";
 import IconCheckbox from "./IconCheckbox.vue";
 
@@ -47,7 +52,7 @@ function toggleBookmark() {
 
 async function copyExpression() {
   try {
-    await navigator.clipboard.writeText(scheduleExpression.value);
+    await navigator.clipboard.writeText(hashBookmark(scheduleExpression.value));
   } catch (err) {
     // TODO
   }
@@ -158,6 +163,7 @@ const nextDates = computed(() => calculateNextDates(scheduleExpression.value));
   color: currentColor;
   font-size: 36px;
   text-align: center;
+  text-transform: uppercase;
 }
 
 .cronForm input:focus {
