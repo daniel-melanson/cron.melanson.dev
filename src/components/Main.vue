@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { isBookmarked, addBookmark, removeBookmark } from "../storage.ts";
+import IconButton from "./IconButton.vue";
+import IconCheckbox from "./IconCheckbox.vue";
 
 function describeExpression(expression: string): string {
   return "At 12:00 on every 2nd day-of-month.";
@@ -29,7 +31,8 @@ function onInput() {
 }
 
 function updateIsBookmarked() {
-  isExpressionBookmarked.value = isValid.value && isBookmarked(scheduleExpression.value);
+  isExpressionBookmarked.value =
+    isValid.value && isBookmarked(scheduleExpression.value);
 }
 
 function toggleBookmark() {
@@ -42,6 +45,14 @@ function toggleBookmark() {
   updateIsBookmarked();
 }
 
+async function copyExpression() {
+  try {
+    await navigator.clipboard.writeText(scheduleExpression.value);
+  } catch (err) {
+    // TODO
+  }
+}
+
 const scheduleDescription = computed(() =>
   describeExpression(scheduleExpression.value)
 );
@@ -51,8 +62,8 @@ const nextDates = computed(() => calculateNextDates(scheduleExpression.value));
 
 <template>
   <main>
-    <div>
-      <label class="scheduleDescription">{{ scheduleDescription }}</label>
+    <div class="scheduleDescription">
+      <label class="scheduleLabel">{{ scheduleDescription }}</label>
       <ol class="nextDates">
         <li>
           <span class="showNextDates" @click="showNextDates = !showNextDates"
@@ -65,7 +76,7 @@ const nextDates = computed(() => calculateNextDates(scheduleExpression.value));
         </template>
       </ol>
     </div>
-    <form ref="formElement">
+    <form class="cronForm" ref="formElement">
       <fieldset>
         <input
           type="text"
@@ -73,43 +84,41 @@ const nextDates = computed(() => calculateNextDates(scheduleExpression.value));
           v-model="scheduleExpression"
           @input="onInput"
         />
-        <button
-          :class="{ bookmarked: isExpressionBookmarked }"
-          type="button"
+        <IconCheckbox
           :disabled="!isValid"
+          :checked="isExpressionBookmarked"
           @click="toggleBookmark"
-        >
-          <font-awesome-icon
-            :icon="[isExpressionBookmarked ? 'fas' : 'far', 'bookmark']"
-            size="lg"
-          />
-        </button>
-        <button type="button" :disabled="!isValid">
-          <font-awesome-icon :icon="['far', 'clipboard']" size="lg" />
-        </button>
+          icon="bookmark"
+        />
+        <IconButton
+          icon="clipboard"
+          :disabled="!isValid"
+          @click="copyExpression"
+        />
       </fieldset>
     </form>
   </main>
 </template>
 
 <style scoped>
-div {
+.scheduleDescription {
   display: flex;
   flex-direction: column;
 }
 
-.scheduleDescription,
+.scheduleLabel,
 .nextDates {
   text-align: center;
   font-style: italic;
 }
 
-.scheduleDescription {
+.scheduleLabel {
   font-size: 24px;
 }
 
 .nextDates {
   font-size: 16px;
+  list-style: none;
 }
 
 .showNextDates {
@@ -117,35 +126,33 @@ div {
   cursor: pointer;
 }
 
-ol {
-  list-style: none;
-}
-
-form {
+.cronForm {
   display: flex;
   justify-content: center;
 }
 
-form:invalid * {
-  border-color: #e74c3c;
-  color: #e74c3c;
+.cronForm:invalid fieldset {
+  border-color: var(--color-red);
 }
 
-form:valid * {
-  border-color: #2ecc71;
+.cronForm:valid fieldset {
+  border-color: var(--color-green);
 }
 
-fieldset {
+.cronForm fieldset {
   display: flex;
-  justify-items: center;
+  align-items: center;
   border-color: currentColor;
   border-radius: 8px;
   border-width: 4px;
-  background: #1f1f1f;
+  background: var(--color-dark-grey);
   transition: border-color 0.3s ease;
+  padding: 0.5rem;
+  margin: 0;
 }
 
-input {
+.cronForm input {
+  padding: 0;
   background: none;
   border: none;
   color: currentColor;
@@ -153,24 +160,7 @@ input {
   text-align: center;
 }
 
-input:focus {
+.cronForm input:focus {
   outline: none;
-}
-
-button {
-  background: none;
-  border: none;
-  transition: color 0.3s ease;
-  margin: 0px 0.25em;
-}
-
-button,
-.bookmarked:hover {
-  color: currentColor;
-}
-
-button:hover,
-.bookmarked {
-  color: #3498db;
 }
 </style>

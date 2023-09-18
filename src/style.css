@@ -20,3 +20,38 @@ body {
 a {
   color: currentColor;
 }
+
+.icon-button {
+  background: none;
+  border: none;
+
+  margin: 0px 0.25em;
+  padding: 0;
+  height: 1.25em;
+  width: 12.5px;
+  position: relative;
+}
+
+.icon-button svg {
+  color: var(--color-white);
+
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  left: 0;
+  display: block;
+
+  transition: color 0.3s ease, opacity 0.3s ease;
+}
+
+.icon-button .solid {
+  opacity: 0;
+}
+
+.icon-button:disabled svg {
+  color: var(--color-red);
+}
+
+.icon-button:not(:disabled):hover .solid {
+  opacity: 1;
+}
