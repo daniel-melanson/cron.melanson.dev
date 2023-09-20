@@ -15,11 +15,12 @@ import CronForm from "./CronForm.vue";
 
 const scheduleSyntax = ref<CronSyntax>(SYNTAX_LIST[0]);
 const scheduleExpression = ref("0 12 */2 * * *");
-const isValid = computed(() =>
-  scheduleSyntax.value.pattern.test(scheduleExpression.value)
-);
 const isBookmarked = ref(
   checkBookmarkMembership(scheduleSyntax.value.type, scheduleExpression.value)
+);
+
+const isValid = computed(() =>
+  scheduleSyntax.value.pattern.test(scheduleExpression.value)
 );
 
 const scheduleDescription = computed(() =>
@@ -35,11 +36,13 @@ function onExpressionChange(expression: string) {
 }
 
 function toggleBookmark() {
-  console.log(isBookmarked.value);
+  const syntax = scheduleSyntax.value.type;
+  const expression = scheduleExpression.value;
+
   if (isBookmarked.value) {
-    removeBookmark(scheduleSyntax.value.type, scheduleExpression.value);
+    removeBookmark(syntax, expression);
   } else {
-    addBookmark(scheduleSyntax.value.type, scheduleExpression.value);
+    addBookmark(syntax, expression);
   }
 
   isBookmarked.value = !isBookmarked.value;
