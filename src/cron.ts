@@ -1,10 +1,10 @@
-enum CronType {
+export enum CronType {
   UNIX = "UNIX",
   QUARTZ = "Quartz",
   AWS = "AWS",
 }
 
-interface Syntax {
+export interface CronSyntax {
   name: CronType;
   description: string;
   pattern: RegExp;
@@ -26,18 +26,27 @@ export const SYNTAX_LIST = [
     description: "AWS (lambda & eventbridge).",
     pattern: /^.+$/,
   },
-] satisfies Syntax[];
+] satisfies CronSyntax[];
 
-export function describeExpression(expression: string): string {
-  return "At 12:00 on every 2nd day-of-month.";
+export const SYNTAX_PATTERNS = SYNTAX_LIST.reduce((a, s) => {
+  a[s.name] = s.pattern.toString();
+  return a;
+}, {} as Record<string, string>);
+
+interface ExpressionDescription {
+  text: string;
+  nextDates: string[];
 }
 
-export function calculateNextDates(expression: string): string[] {
-  return [
-    "2023-10-02 12:00:00",
-    "2023-10-04 12:00:00",
-    "2023-10-06 12:00:00",
-    "2023-10-08 12:00:00",
-    "2023-10-10 12:00:00",
-  ];
+export function describeExpression(expression: string): ExpressionDescription {
+  return {
+    text: "At 12:00 on every 2nd day-of-month.",
+    nextDates: [
+      "2023-10-02 12:00:00",
+      "2023-10-04 12:00:00",
+      "2023-10-06 12:00:00",
+      "2023-10-08 12:00:00",
+      "2023-10-10 12:00:00",
+    ],
+  };
 }
