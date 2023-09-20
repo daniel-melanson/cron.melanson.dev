@@ -1,22 +1,25 @@
+<script setup lang="ts">
+import { inject } from "vue";
+
+defineProps<{
+  icon: string;
+  checked?: boolean;
+}>();
+
+const invalid = inject<boolean>("invalid");
+</script>
+
 <template>
   <button
     class="icon-button icon-checkbox"
     type="button"
     :class="{ checked: checked }"
-    :disabled="disabled"
+    :disabled="invalid"
   >
     <font-awesome-icon class="regular" :icon="['far', icon]" size="lg" />
     <font-awesome-icon class="solid" :icon="['fas', icon]" size="lg" />
   </button>
 </template>
-
-<script setup lang="ts">
-defineProps<{
-  icon: string;
-  disabled?: boolean;
-  checked?: boolean;
-}>();
-</script>
 
 <style scoped>
 .icon-checkbox.checked svg {
