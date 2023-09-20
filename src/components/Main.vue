@@ -1,23 +1,50 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { describeExpression, SYNTAX_LIST, CronSyntaxType } from "../cron";
+import {
+  describeExpression,
+  SYNTAX_LIST,
+  CronSyntaxType,
+  CronSyntax,
+} from "../cron";
+import {
+  checkBookmarkMembership,
+  addBookmark,
+  removeBookmark,
+} from "../storage";
 import CronForm from "./CronForm.vue";
 
-const scheduleSyntaxIndex = ref(0);
+const scheduleSyntax = ref<CronSyntax>(SYNTAX_LIST[0]);
 const scheduleExpression = ref("0 12 */2 * * *");
 const isValid = computed(() =>
-  SYNTAX_LIST[scheduleSyntaxIndex.value].pattern.test(scheduleExpression.value)
+  scheduleSyntax.value.pattern.test(scheduleExpression.value)
+);
+const isBookmarked = ref(
+  checkBookmarkMembership(scheduleSyntax.value.type, scheduleExpression.value)
 );
 
 const scheduleDescription = computed(() =>
   describeExpression(scheduleExpression.value)
 );
 
-function onChange(cronType: CronSyntaxType, expression: string) {
-  scheduleSyntaxIndex.value = SYNTAX_LIST.findIndex(
-    (s) => s.name === cronType
-  )!;
+function onSyntaxChange(type: CronSyntaxType) {
+  scheduleSyntax.value = SYNTAX_LIST.find((s) => s.type === type)!;
+}
+
+function onExpressionChange(expression: string) {
   scheduleExpression.value = expression.toUpperCase();
+}
+
+function toggleBookmark() {
+  console.log(isBookmarked.value);
+  if (isBookmarked.value) {
+    removeBookmark(scheduleSyntax.value.type, scheduleExpression.value);
+  } else {
+    addBookmark(scheduleSyntax.value.type, scheduleExpression.value);
+  }
+
+  isBookmarked.value = !isBookmarked.value;
+
+  // TODO bookmark list
 }
 
 const showNextDates = ref(false);
@@ -41,10 +68,12 @@ const showNextDates = ref(false);
     </div>
     <CronForm
       :syntaxKinds="SYNTAX_LIST"
-      :syntaxIndex="scheduleSyntaxIndex"
       :expression="scheduleExpression"
       :isValid="isValid"
-      @cronChange="onChange"
+      :isBookmarked="isBookmarked"
+      @update:expression="onExpressionChange"
+      @update:syntax="onSyntaxChange"
+      @update:isBookmarked="toggleBookmark"
     />
   </main>
 </template>

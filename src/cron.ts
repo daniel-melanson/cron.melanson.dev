@@ -5,31 +5,31 @@ export enum CronSyntaxType {
 }
 
 export interface CronSyntax {
-  name: CronSyntaxType;
+  type: CronSyntaxType;
   description: string;
   pattern: RegExp;
 }
 
 export const SYNTAX_LIST = [
   {
-    name: CronSyntaxType.UNIX,
+    type: CronSyntaxType.UNIX,
     description: "Unix/Linux specification.",
     pattern: /^A+$/,
   },
   {
-    name: CronSyntaxType.QUARTZ,
+    type: CronSyntaxType.QUARTZ,
     description: "Quartz specification (bamboo).",
     pattern: /^B+$/,
   },
   {
-    name: CronSyntaxType.AWS,
+    type: CronSyntaxType.AWS,
     description: "AWS (lambda & eventbridge).",
     pattern: /^C+$/,
   },
 ] satisfies CronSyntax[];
 
 export const SYNTAX_PATTERNS = SYNTAX_LIST.reduce((a, s) => {
-  a[s.name] = s.pattern.toString();
+  a[s.type] = s.pattern.toString();
   return a;
 }, {} as Record<string, string>);
 

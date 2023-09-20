@@ -1,3 +1,5 @@
+import { CronSyntaxType } from "./cron";
+
 const KEY = "CRON_BOOKMARKS";
 const storage = JSON.parse(window.localStorage.getItem(KEY) || "{}");
 
@@ -9,9 +11,11 @@ function checkKeyMembership(key: string): boolean {
   return key in storage;
 }
 
-function usingKey<T>(f: (key: string) => T): (value: string) => T {
-  return (value) => {
-    const key = value.toUpperCase().trim();
+type StorageOperation<T> = (type: CronSyntaxType, expression: string) => T;
+
+function usingKey<T>(f: (key: string) => T): StorageOperation<T> {
+  return (type, expression) => {
+    const key = `${type.toUpperCase()}-${expression.toUpperCase()}`;
 
     return f(key);
   };
@@ -20,7 +24,7 @@ function usingKey<T>(f: (key: string) => T): (value: string) => T {
 function applyMembershipUpdate(
   membershipRequirement: boolean,
   f: (key: string) => void
-): (value: string) => void {
+): StorageOperation<void> {
   return usingKey((key) => {
     if (checkKeyMembership(key) !== membershipRequirement) return;
 
@@ -31,7 +35,7 @@ function applyMembershipUpdate(
 }
 
 export const hashBookmark = usingKey((key) => key);
-export const isBookmarked = usingKey(checkKeyMembership);
+export const checkBookmarkMembership = usingKey(checkKeyMembership);
 
 export const addBookmark = applyMembershipUpdate(
   false,

@@ -1,44 +1,27 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
-import {
-  isBookmarked,
-  addBookmark,
-  removeBookmark,
-  hashBookmark,
-} from "../storage";
-import { CronSyntax, CronSyntaxType } from "../cron";
+import { CronSyntax } from "../cron";
+import { createSnackbar } from "../snackbar";
 import IconButton from "./IconButton.vue";
 import IconCheckbox from "./IconCheckbox.vue";
 import Select from "./Select.vue";
-import { createSnackbar } from "../snackbar";
 
 interface Props {
   syntaxKinds: CronSyntax[];
-  syntaxIndex: number;
   expression: string;
   isValid: boolean;
-}
-const { syntaxKinds, syntaxIndex, expression } = defineProps<Props>();
-
-
-const isExpressionBookmarked = ref(false);
-function toggleBookmark() {
-  if (isExpressionBookmarked.value) {
-    removeBookmark(expression);
-  } else {
-    addBookmark(expression);
-  }
+  isBookmarked: boolean;
 }
 
-async function copyExpression() {
-  const key = hashBookmark(expression);
+defineProps<Props>();
+
+async function copyExpression(expression: string) {
   try {
-    await navigator.clipboard.writeText(key);
+    await navigator.clipboard.writeText(expression);
   } catch (err) {
     createSnackbar("failure", "Could not copy to clipboard.");
   }
 
-  createSnackbar("success", `Copied '${key}' to clipboard.`);
+  createSnackbar("success", `Copied '${expression}' to clipboard.`);
 }
 </script>
 
@@ -46,32 +29,27 @@ async function copyExpression() {
   <form class="cronForm" :class="{ valid: isValid }">
     <fieldset>
       <Select
-        :options="syntaxKinds.map((s) => s.name)"
-        @change="(event) => $emit('cronChange', event.target.value, expression)"
+        :options="syntaxKinds.map((s) => s.type)"
+        @change="(event) => $emit('update:syntax', event.target.value)"
       />
       <input
         type="text"
         required
         :value="expression"
         @input.trim="
-          (event) =>
-            $emit(
-              'cronChange',
-              syntaxKinds[syntaxIndex].name,
-              event.target.value ?? ''
-            )
+          (event) => $emit('update:expression', event.target.value ?? '')
         "
       />
       <IconCheckbox
         :disabled="!isValid"
-        :checked="isExpressionBookmarked"
-        @click="toggleBookmark"
+        :checked="isBookmarked"
+        @click="$emit('update:isBookmarked')"
         icon="bookmark"
       />
       <IconButton
         icon="clipboard"
         :disabled="!isValid"
-        @click="copyExpression"
+        @click="copyExpression(expression)"
       />
     </fieldset>
   </form>
