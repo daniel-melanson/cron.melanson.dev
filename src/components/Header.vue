@@ -48,7 +48,7 @@ a::after {
   left: 50%;
   transform: translateX(-50%);
   width: 0px;
-  border-bottom: 2px solid currentColor;
+  border-bottom: 1px solid currentColor;
   transition: width 0.3s ease;
 }
 
