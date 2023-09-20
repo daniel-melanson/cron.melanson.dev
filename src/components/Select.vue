@@ -1,12 +1,14 @@
 <script setup lang="ts">
-defineProps({
-  options: Array,
-});
+interface Props {
+  options: string[];
+}
+
+defineProps<Props>();
 </script>
 
 <template>
   <select class="select">
-    <option v-for="opt in options">{{ opt }}</option>
+    <option v-for="opt in options" :value="opt">{{ opt }}</option>
   </select>
 </template>
 
