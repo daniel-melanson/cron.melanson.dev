@@ -27,6 +27,7 @@
 
 <style scoped>
 footer {
+  margin-top: 2em;
   display: flex;
   justify-content: center;
   font-size: 14px;
