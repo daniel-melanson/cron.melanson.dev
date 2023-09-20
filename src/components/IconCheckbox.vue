@@ -6,7 +6,7 @@ defineProps<{
   checked?: boolean;
 }>();
 
-const invalid = inject<boolean>("invalid");
+const isFormValid = inject<boolean>("isFormValid");
 </script>
 
 <template>
@@ -14,7 +14,7 @@ const invalid = inject<boolean>("invalid");
     class="icon-button icon-checkbox"
     type="button"
     :class="{ checked: checked }"
-    :disabled="invalid"
+    :disabled="!isFormValid"
   >
     <font-awesome-icon class="regular" :icon="['far', icon]" size="lg" />
     <font-awesome-icon class="solid" :icon="['fas', icon]" size="lg" />
