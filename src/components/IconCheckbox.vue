@@ -1,12 +1,9 @@
 <script setup lang="ts">
-import { inject } from "vue";
-
 defineProps<{
   icon: string;
+  disabled: boolean;
   checked?: boolean;
 }>();
-
-const isFormValid = inject<boolean>("isFormValid");
 </script>
 
 <template>
@@ -14,7 +11,7 @@ const isFormValid = inject<boolean>("isFormValid");
     class="icon-button icon-checkbox"
     type="button"
     :class="{ checked: checked }"
-    :disabled="!isFormValid"
+    :disabled="disabled"
   >
     <font-awesome-icon class="regular" :icon="['far', icon]" size="lg" />
     <font-awesome-icon class="solid" :icon="['fas', icon]" size="lg" />

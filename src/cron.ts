@@ -1,30 +1,30 @@
-export enum CronType {
+export enum CronSyntaxType {
   UNIX = "UNIX",
   QUARTZ = "Quartz",
   AWS = "AWS",
 }
 
 export interface CronSyntax {
-  name: CronType;
+  name: CronSyntaxType;
   description: string;
   pattern: RegExp;
 }
 
 export const SYNTAX_LIST = [
   {
-    name: CronType.UNIX,
+    name: CronSyntaxType.UNIX,
     description: "Unix/Linux specification.",
-    pattern: /^.+$/,
+    pattern: /^A+$/,
   },
   {
-    name: CronType.QUARTZ,
+    name: CronSyntaxType.QUARTZ,
     description: "Quartz specification (bamboo).",
-    pattern: /^.+$/,
+    pattern: /^B+$/,
   },
   {
-    name: CronType.AWS,
+    name: CronSyntaxType.AWS,
     description: "AWS (lambda & eventbridge).",
-    pattern: /^.+$/,
+    pattern: /^C+$/,
   },
 ] satisfies CronSyntax[];
 
