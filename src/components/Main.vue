@@ -8,8 +8,13 @@ import {
 } from "../storage.ts";
 import IconButton from "./IconButton.vue";
 import IconCheckbox from "./IconCheckbox.vue";
-import { calculateNextDates, describeExpression } from "../cron.ts";
+import {
+  calculateNextDates,
+  describeExpression,
+  SYNTAX_LIST,
+} from "../cron.ts";
 import { createSnackbar } from "../snackbar.ts";
+import Select from "./Select.vue";
 
 const formElement = ref<HTMLFormElement | null>(null);
 const scheduleExpression = ref("0 12 */2 * * *");
@@ -73,6 +78,7 @@ const nextDates = computed(() => calculateNextDates(scheduleExpression.value));
     </div>
     <form class="cronForm" ref="formElement">
       <fieldset>
+        <Select :options="SYNTAX_LIST.map((s) => s.name)" />
         <input
           type="text"
           required

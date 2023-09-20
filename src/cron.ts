@@ -1,3 +1,33 @@
+enum CronType {
+  UNIX = "UNIX",
+  QUARTZ = "Quartz",
+  AWS = "AWS",
+}
+
+interface Syntax {
+  name: CronType;
+  description: string;
+  pattern: RegExp;
+}
+
+export const SYNTAX_LIST = [
+  {
+    name: CronType.UNIX,
+    description: "Unix/Linux specification.",
+    pattern: /^.+$/,
+  },
+  {
+    name: CronType.QUARTZ,
+    description: "Quartz specification (bamboo).",
+    pattern: /^.+$/,
+  },
+  {
+    name: CronType.AWS,
+    description: "AWS (lambda & eventbridge).",
+    pattern: /^.+$/,
+  },
+] satisfies Syntax[];
+
 export function describeExpression(expression: string): string {
   return "At 12:00 on every 2nd day-of-month.";
 }
