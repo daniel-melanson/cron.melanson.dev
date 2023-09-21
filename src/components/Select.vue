@@ -8,7 +8,7 @@ defineProps<Props>();
 
 <template>
   <select class="select">
-    <option v-for="opt in options" :value="opt">{{ opt }}</option>
+    <option v-for="opt in options" :value="opt" :key="opt">{{ opt }}</option>
   </select>
 </template>
 

@@ -60,8 +60,12 @@ const showNextDates = ref(false);
           at
           {{ description.isValid ? description.nextDates[0] : "unknown" }}
         </li>
-        <template v-for="(nextDate, i) in description.nextDates">
-          <li v-if="i > 0 && showNextDates">
+        <template
+          v-for="(nextDate, i) in description.isValid
+            ? description.nextDates
+            : []"
+        >
+          <li v-if="i > 0 && showNextDates" :key="i">
             then at {{ description.isValid ? nextDate : "unknown" }}
           </li>
         </template>
