@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import {
-  describeExpression,
   SYNTAX_LIST,
   CronSyntaxType,
   CronSyntax,
+  formatExpression,
 } from "../cron";
 import {
   checkBookmarkMembership,
@@ -13,36 +13,42 @@ import {
 } from "../storage";
 import CronForm from "./CronForm.vue";
 
-const scheduleSyntax = ref<CronSyntax>(SYNTAX_LIST[0]);
-const scheduleExpression = ref("0 12 */2 * * *");
+const syntax = ref<CronSyntax>(SYNTAX_LIST[0]);
+const expression = ref("0 12 */2 * * *");
 const isBookmarked = ref(
-  checkBookmarkMembership(scheduleSyntax.value.type, scheduleExpression.value)
+  checkBookmarkMembership(syntax.value.type, expression.value)
 );
 
-const isValid = computed(() =>
-  scheduleSyntax.value.pattern.test(scheduleExpression.value)
-);
-
-const scheduleDescription = computed(() =>
-  describeExpression(scheduleExpression.value)
-);
+const description = computed(() => {
+  return {
+    isValid: false,
+    invalidIndices: [],
+    text: "At 12:00 on every 2nd day-of-month.",
+    nextDates: [
+      "2023-10-02 12:00:00",
+      "2023-10-04 12:00:00",
+      "2023-10-06 12:00:00",
+      "2023-10-08 12:00:00",
+      "2023-10-10 12:00:00",
+    ],
+  };
+});
 
 function onSyntaxChange(type: CronSyntaxType) {
-  scheduleSyntax.value = SYNTAX_LIST.find((s) => s.type === type)!;
+  syntax.value = SYNTAX_LIST.find((s) => s.type === type)!;
 }
 
-function onExpressionChange(expression: string) {
-  scheduleExpression.value = expression.toUpperCase();
+function onExpressionChange(value: string) {
+  expression.value = formatExpression(value);
 }
 
 function toggleBookmark() {
-  const syntax = scheduleSyntax.value.type;
-  const expression = scheduleExpression.value;
+  const syntaxType = syntax.value.type;
 
   if (isBookmarked.value) {
-    removeBookmark(syntax, expression);
+    removeBookmark(syntaxType, expression.value);
   } else {
-    addBookmark(syntax, expression);
+    addBookmark(syntaxType, expression.value);
   }
 
   isBookmarked.value = !isBookmarked.value;
@@ -56,23 +62,28 @@ const showNextDates = ref(false);
 <template>
   <main>
     <div class="scheduleDescription">
-      <label class="scheduleLabel">{{ scheduleDescription.text }}</label>
+      <label class="scheduleLabel">{{
+        description.isValid ? description.text : "Unknown"
+      }}</label>
       <ol class="nextDates">
         <li>
           <span class="showNextDates" @click="showNextDates = !showNextDates"
             >next</span
           >
-          at {{ scheduleDescription.nextDates[0] }}
+          at
+          {{ description.isValid ? description.nextDates[0] : "unknown" }}
         </li>
-        <template v-for="(nextDate, i) in scheduleDescription.nextDates">
-          <li v-if="i > 0 && showNextDates">then at {{ nextDate }}</li>
+        <template v-for="(nextDate, i) in description.nextDates">
+          <li v-if="i > 0 && showNextDates">
+            then at {{ description.isValid ? nextDate : "unknown" }}
+          </li>
         </template>
       </ol>
     </div>
     <CronForm
       :syntaxKinds="SYNTAX_LIST"
-      :expression="scheduleExpression"
-      :isValid="isValid"
+      :expression="expression"
+      :isValid="description.isValid"
       :isBookmarked="isBookmarked"
       @update:expression="onExpressionChange"
       @update:syntax="onSyntaxChange"
@@ -98,6 +109,7 @@ const showNextDates = ref(false);
 }
 
 .nextDates {
+  padding: 0;
   font-size: 16px;
   list-style: none;
 }

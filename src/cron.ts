@@ -48,7 +48,7 @@ function basicCronValue(value: RegExp) {
   const listItem = joinP(/,/, listStart);
 
   return {
-    whole: pattern(
+    wholePattern: pattern(
       oneOf(
         named("wildcard", /\*/),
         named("value", value),
@@ -57,31 +57,15 @@ function basicCronValue(value: RegExp) {
       ),
       optional("step", joinP(/\//, named("stepValue", /\d+/)))
     ),
-    listItem: pattern(namedRange),
+    listItemPattern: pattern(namedRange),
   };
 }
 
-const UNIX_CRON_REGEXS = {
-  // minute         0-59
-  minute: basicCronValue(/[0-5]?\d/),
-  // hour           0-23
-  hour: basicCronValue(oneOf(/[01]?\d/, /2[0-3]/)),
-  // day of month   1-31
-  dayOfMonth: basicCronValue(oneOf(/[0-2]?\d/, /3[01]/)),
-  // month          1-12 (or names, see below)
-  month: basicCronValue(
-    oneOf(/[1-9]/, /1[012]/, /JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC/)
-  ),
-  // day of week    0-7 (0 or 7 is Sunday, or use names)
-  dayOfWeek: basicCronValue(oneOf(/[0-7]/, /MON|TUE|WED|THU|FRI|SAT|SUN/)),
-};
-
-// TODO
-// validators instead of pattern
-// - split input by space
-// - check length
-// - run each part against pattern
-// - return violating indices
+interface CronField {
+  name: string;
+  wholePattern: RegExp;
+  listItemPattern: RegExp;
+}
 
 export enum CronSyntaxType {
   UNIX = "UNIX",
@@ -89,49 +73,147 @@ export enum CronSyntaxType {
   AWS = "AWS",
 }
 
-export interface CronSyntax {
-  type: CronSyntaxType;
-  description: string;
-  pattern: RegExp;
+type ExpressionDescription =
+  | InvalidExpressionDescription
+  | ValidExpressionDescription;
+
+interface InvalidExpressionDescription {
+  isValid: false;
+  badFieldIndices: number[];
 }
 
-export const SYNTAX_LIST = [
-  {
-    type: CronSyntaxType.UNIX,
-    description: "Unix/Linux specification.",
-    pattern: /^A+$/,
-  },
-  {
-    type: CronSyntaxType.QUARTZ,
-    description: "Quartz specification (bamboo).",
-    pattern: /^B+$/,
-  },
-  {
-    type: CronSyntaxType.AWS,
-    description: "AWS (lambda & eventbridge).",
-    pattern: /^C+$/,
-  },
-] satisfies CronSyntax[];
-
-export const SYNTAX_PATTERNS = SYNTAX_LIST.reduce((a, s) => {
-  a[s.type] = s.pattern.toString();
-  return a;
-}, {} as Record<string, string>);
-
-interface ExpressionDescription {
+interface ValidExpressionDescription {
+  isValid: true;
   text: string;
   nextDates: string[];
 }
 
-export function describeExpression(expression: string): ExpressionDescription {
-  return {
-    text: "At 12:00 on every 2nd day-of-month.",
-    nextDates: [
-      "2023-10-02 12:00:00",
-      "2023-10-04 12:00:00",
-      "2023-10-06 12:00:00",
-      "2023-10-08 12:00:00",
-      "2023-10-10 12:00:00",
-    ],
-  };
+export interface CronSyntax {
+  type: CronSyntaxType;
+  description: string;
+  pattern: RegExp;
+  fields: CronField[];
+  describe: (expression: string) => ExpressionDescription;
 }
+
+class CronSyntaxBuilder {
+  private type: CronSyntaxType;
+  private description: string;
+  private fields: CronField[] = [];
+
+  constructor(type: CronSyntaxType, description: string) {
+    this.type = type;
+    this.description = description;
+  }
+
+  addField(name: string, pattern: RegExp): this {
+    const { wholePattern, listItemPattern } = basicCronValue(pattern);
+    this.fields.push({
+      name,
+      wholePattern,
+      listItemPattern,
+    });
+
+    return this;
+  }
+
+  build(): CronSyntax {
+    return {
+      type: this.type,
+      description: this.description,
+      pattern: new RegExp(
+        "^" +
+          this.fields
+            .map((field) =>
+              field.wholePattern.source.replace(/(?<=\()\?\<\w+\>/g, "")
+            )
+            .map((pattern) => pattern.substring(1, pattern.length - 1))
+            .join(" ") +
+          "$"
+      ),
+      describe: (expression: string): ExpressionDescription => {
+        const partitions = partitionExpression(expression);
+
+        const fieldMatches = this.fields.map((field, i) => partitions[i] && partitions[i].match(field.wholePattern));
+
+        const badFieldIndices = fieldMatches.reduce((acc, x, i) => x ? acc : [...acc, i], [] as number[]);
+        if (badFieldIndices.length > 0)
+          return { isValid: false, badFieldIndices };
+
+        // TODO: Implement
+        // fieldMatches is full of good matches
+        // describe each match as a string
+        // join strings with " "
+        // calculate next dates
+
+        return {
+          isValid: true,
+          text: "At 12:00 on every 2nd day-of-month.",
+          nextDates: [
+            "2023-10-02 12:00:00",
+            "2023-10-04 12:00:00",
+            "2023-10-06 12:00:00",
+            "2023-10-08 12:00:00",
+            "2023-10-10 12:00:00",
+          ],
+        };
+      },
+      fields: this.fields,
+    };
+  }
+}
+
+export function formatExpression(expression: string): string {
+  const paddingRight = expression.match(/\s*$/)?.[0] ?? "";
+
+  return expression.trim().split(/\s+/).join(" ") + paddingRight;
+}
+
+export function partitionExpression(expression: string): string[] {
+  return expression.trim().split(/\s+/);
+}
+
+export const SYNTAX_LIST = [
+  new CronSyntaxBuilder(CronSyntaxType.UNIX, "Unix/Linux specification.")
+    .addField("minute", /[0-5]?\d/)
+    .addField("hour", oneOf(/[01]?\d/, /2[0-3]/))
+    .addField("dayOfMonth", oneOf(/[0-2]?\d/, /3[01]/))
+    .addField(
+      "month",
+      oneOf(
+        /[1-9]/,
+        /1[012]/,
+        /JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC/
+      )
+    )
+    .addField("dayOfWeek", oneOf(/[0-7]/, /MON|TUE|WED|THU|FRI|SAT|SUN/))
+    .build(),
+  new CronSyntaxBuilder(CronSyntaxType.AWS, "AWS Lambda cron.")
+    .addField("minute", /[0-5]?\d/)
+    .addField("hour", oneOf(/[01]?\d/, /2[0-3]/))
+    .addField("dayOfMonth", oneOf(/[0-2]?\d/, /3[01]/))
+    .addField(
+      "month",
+      oneOf(
+        /[1-9]/,
+        /1[012]/,
+        /JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC/
+      )
+    )
+    .addField("dayOfWeek", oneOf(/[0-7]/, /MON|TUE|WED|THU|FRI|SAT|SUN/))
+    .build(),
+  new CronSyntaxBuilder(CronSyntaxType.QUARTZ, "Quarts scheduler cron.")
+    .addField("minute", /[0-5]?\d/)
+    .addField("hour", oneOf(/[01]?\d/, /2[0-3]/))
+    .addField("dayOfMonth", oneOf(/[0-2]?\d/, /3[01]/))
+    .addField(
+      "month",
+      oneOf(
+        /[1-9]/,
+        /1[012]/,
+        /JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC/
+      )
+    )
+    .addField("dayOfWeek", oneOf(/[0-7]/, /MON|TUE|WED|THU|FRI|SAT|SUN/))
+    .build(),
+] satisfies CronSyntax[];
