@@ -19,20 +19,7 @@ const isBookmarked = ref(
   checkBookmarkMembership(syntax.value.type, expression.value)
 );
 
-const description = computed(() => {
-  return {
-    isValid: false,
-    invalidIndices: [],
-    text: "At 12:00 on every 2nd day-of-month.",
-    nextDates: [
-      "2023-10-02 12:00:00",
-      "2023-10-04 12:00:00",
-      "2023-10-06 12:00:00",
-      "2023-10-08 12:00:00",
-      "2023-10-10 12:00:00",
-    ],
-  };
-});
+const description = computed(() => syntax.value.describe(expression.value));
 
 function onSyntaxChange(type: CronSyntaxType) {
   syntax.value = SYNTAX_LIST.find((s) => s.type === type)!;
