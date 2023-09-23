@@ -65,6 +65,7 @@ interface CronField {
   name: string;
   wholePattern: RegExp;
   listItemPattern: RegExp;
+  validators: CronFieldValidator[];
 }
 
 export enum CronSyntaxType {
@@ -79,7 +80,7 @@ type ExpressionDescription =
 
 interface InvalidExpressionDescription {
   isValid: false;
-  badFieldIndices: number[];
+  invalidFieldIndices: number[];
 }
 
 interface ValidExpressionDescription {
@@ -96,6 +97,7 @@ export interface CronSyntax {
   describe: (expression: string) => ExpressionDescription;
 }
 
+type CronFieldValidator = (...matchedFields: RegExpMatchArray[]) => boolean;
 class CronSyntaxBuilder {
   private type: CronSyntaxType;
   private description: string;
@@ -106,12 +108,17 @@ class CronSyntaxBuilder {
     this.description = description;
   }
 
-  addField(name: string, pattern: RegExp): this {
+  addField(
+    name: string,
+    pattern: RegExp,
+    ...validators: CronFieldValidator[]
+  ): this {
     const { wholePattern, listItemPattern } = basicCronValue(pattern);
     this.fields.push({
       name,
       wholePattern,
       listItemPattern,
+      validators,
     });
 
     return this;
@@ -134,17 +141,37 @@ class CronSyntaxBuilder {
       describe: (expression: string): ExpressionDescription => {
         const partitions = partitionExpression(expression);
 
-        const fieldMatches = this.fields.map((field, i) => partitions[i] && partitions[i].match(field.wholePattern));
+        const matchResults = this.fields.map(
+          (field, i) => partitions[i] && partitions[i].match(field.wholePattern)
+        );
 
-        const badFieldIndices = fieldMatches.reduce((acc, x, i) => x ? acc : [...acc, i], [] as number[]);
-        if (badFieldIndices.length > 0)
-          return { isValid: false, badFieldIndices };
+        const getInvalidFieldIndices = () => {
+          const unmatchedFieldIndices = matchResults.reduce(
+            (acc, x, i) => (x && x.length > 0 ? acc : [...acc, i]),
+            [] as number[]
+          );
 
-        // TODO: Implement
-        // fieldMatches is full of good matches
-        // describe each match as a string
-        // join strings with " "
-        // calculate next dates
+          if (unmatchedFieldIndices.length > 0) return unmatchedFieldIndices;
+
+          const fieldMatches = matchResults as RegExpMatchArray[];
+          const invalidFields = fieldMatches.reduce((acc, x, i) => {
+            const validationResults = this.fields[i].validators.map((f) =>
+              f(x)
+            );
+
+            if (validationResults.some((b) => !b)) return [...acc, i];
+
+            return acc;
+          }, [] as number[]);
+
+          return invalidFields;
+        };
+
+        const invalidFieldIndices = getInvalidFieldIndices();
+        if (invalidFieldIndices.length > 0)
+          return { isValid: false, invalidFieldIndices };
+
+        // TODO describe string and get next dates
 
         return {
           isValid: true,
