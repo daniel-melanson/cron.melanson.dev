@@ -74,19 +74,21 @@ export enum CronSyntaxType {
   AWS = "AWS",
 }
 
-type ExpressionDescription =
-  | InvalidExpressionDescription
-  | ValidExpressionDescription;
+type Result<T, E> = { success: true; value: T } | { success: false; error: E };
 
-interface InvalidExpressionDescription {
-  isValid: false;
-  invalidFieldIndices: number[];
-}
-
-interface ValidExpressionDescription {
-  isValid: true;
+interface ExpressionDescription {
   text: string;
   nextDates: string[];
+}
+
+class InvalidCronExpression extends Error {
+  public readonly partitions: string[];
+  public readonly invalidFieldIndices: number[];
+  constructor(partitions: string[], invalidFieldIndices: number[]) {
+    super("Invalid cron expression.");
+    this.partitions = partitions;
+    this.invalidFieldIndices = invalidFieldIndices;
+  }
 }
 
 export interface CronSyntax {
@@ -94,7 +96,9 @@ export interface CronSyntax {
   description: string;
   pattern: RegExp;
   fields: CronField[];
-  describe: (expression: string) => ExpressionDescription;
+  describe: (
+    expression: string
+  ) => Result<ExpressionDescription, InvalidCronExpression>;
 }
 
 type CronFieldValidator = (...matchedFields: RegExpMatchArray[]) => boolean;
@@ -138,7 +142,7 @@ class CronSyntaxBuilder {
             .join(" ") +
           "$"
       ),
-      describe: (expression: string): ExpressionDescription => {
+      describe: (expression) => {
         const partitions = partitionExpression(expression);
 
         const matchResults = this.fields.map(
@@ -169,20 +173,25 @@ class CronSyntaxBuilder {
 
         const invalidFieldIndices = getInvalidFieldIndices();
         if (invalidFieldIndices.length > 0)
-          return { isValid: false, invalidFieldIndices };
+          return {
+            success: false,
+            error: new InvalidCronExpression(partitions, invalidFieldIndices),
+          };
 
         // TODO describe string and get next dates
 
         return {
-          isValid: true,
-          text: "At 12:00 on every 2nd day-of-month.",
-          nextDates: [
-            "2023-10-02 12:00:00",
-            "2023-10-04 12:00:00",
-            "2023-10-06 12:00:00",
-            "2023-10-08 12:00:00",
-            "2023-10-10 12:00:00",
-          ],
+          success: true,
+          value: {
+            text: "At 12:00 on every 2nd day-of-month.",
+            nextDates: [
+              "2023-10-02 12:00:00",
+              "2023-10-04 12:00:00",
+              "2023-10-06 12:00:00",
+              "2023-10-08 12:00:00",
+              "2023-10-10 12:00:00",
+            ],
+          },
         };
       },
       fields: this.fields,

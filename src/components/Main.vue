@@ -19,7 +19,9 @@ const isBookmarked = ref(
   checkBookmarkMembership(syntax.value.type, expression.value)
 );
 
-const description = computed(() => syntax.value.describe(expression.value));
+const descriptionResult = computed(() =>
+  syntax.value.describe(expression.value)
+);
 
 function onSyntaxChange(type: CronSyntaxType) {
   syntax.value = SYNTAX_LIST.find((s) => s.type === type)!;
@@ -50,7 +52,7 @@ const showNextDates = ref(false);
   <main>
     <div class="scheduleDescription">
       <label class="scheduleLabel">{{
-        description.isValid ? description.text : "Unknown"
+        descriptionResult.success ? descriptionResult.value.text : "Unknown"
       }}</label>
       <ol class="nextDates">
         <li>
@@ -58,15 +60,19 @@ const showNextDates = ref(false);
             >next</span
           >
           at
-          {{ description.isValid ? description.nextDates[0] : "unknown" }}
+          {{
+            descriptionResult.success
+              ? descriptionResult.value.nextDates[0]
+              : "unknown"
+          }}
         </li>
         <template
-          v-for="(nextDate, i) in description.isValid
-            ? description.nextDates
+          v-for="(nextDate, i) in descriptionResult.success
+            ? descriptionResult.value.nextDates
             : []"
         >
           <li v-if="i > 0 && showNextDates" :key="i">
-            then at {{ description.isValid ? nextDate : "unknown" }}
+            then at {{ descriptionResult.success ? nextDate : "unknown" }}
           </li>
         </template>
       </ol>
@@ -74,16 +80,42 @@ const showNextDates = ref(false);
     <CronForm
       :syntaxKinds="SYNTAX_LIST"
       :expression="expression"
-      :isValid="description.isValid"
+      :isValid="descriptionResult.success"
       :isBookmarked="isBookmarked"
       @update:expression="onExpressionChange"
       @update:syntax="onSyntaxChange"
       @update:isBookmarked="toggleBookmark"
     />
+    <div class="fieldTitles">
+      <a
+        v-for="(field, i) in syntax.fields"
+        :key="field.name"
+        :class="{
+          invalid:
+            !descriptionResult.success &&
+            descriptionResult.error.invalidFieldIndices.includes(i),
+        }"
+        >{{ field.name }}</a
+      >
+    </div>
   </main>
 </template>
 
 <style scoped>
+.fieldTitles {
+  display: flex;
+  justify-content: center;
+}
+
+.fieldTitles > * {
+  padding: 0 1em;
+}
+
+.fieldTitles .invalid {
+  background-color: var(--color-red);
+  border-radius: 8px;
+}
+
 .scheduleDescription {
   display: flex;
   flex-direction: column;
