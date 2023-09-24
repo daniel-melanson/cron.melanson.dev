@@ -2,7 +2,7 @@ function many(exp: RegExp): RegExp {
   return new RegExp(`${exp.source}*`);
 }
 
-function joinP(...exps: RegExp[]): RegExp {
+function joinG(...exps: RegExp[]): RegExp {
   return new RegExp(`(${join(...exps).source})`);
 }
 
@@ -14,7 +14,7 @@ function oneOf(...exps: RegExp[]): RegExp {
   return new RegExp(`${exps.map((v) => v.source).join("|")}`);
 }
 
-function oneOfP(...exps: RegExp[]): RegExp {
+function oneOfG(...exps: RegExp[]): RegExp {
   return new RegExp(`(${oneOf(...exps).source})`);
 }
 
@@ -35,7 +35,7 @@ function pattern(...exps: RegExp[]): RegExp {
 }
 
 function basicCronValue(value: RegExp) {
-  const range = join(value, oneOfP(/-/, /~/), value);
+  const range = join(value, oneOfG(/-/, /~/), value);
   const namedRange = join(
     named("value", value),
     optional(
@@ -44,18 +44,18 @@ function basicCronValue(value: RegExp) {
     )
   );
 
-  const listStart = oneOfP(value, range);
-  const listItem = joinP(/,/, listStart);
+  const listStart = oneOfG(value, range);
+  const listItem = joinG(/,/, listStart);
 
   return {
     wholePattern: pattern(
-      oneOf(
+      oneOfG(
         named("wildcard", /\*/),
         named("value", value),
         named("range", range),
         named("list", join(listStart, many(listItem)))
       ),
-      optional("step", joinP(/\//, named("stepValue", /\d+/)))
+      optional("step", joinG(/\//, named("stepValue", /\d+/)))
     ),
     listItemPattern: pattern(namedRange),
   };
