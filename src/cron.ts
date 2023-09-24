@@ -172,7 +172,7 @@ class CronSyntaxBuilder {
         };
 
         const invalidFieldIndices = getInvalidFieldIndices();
-        if (invalidFieldIndices.length > 0)
+        if (invalidFieldIndices.length > 0 || partitions.length > this.fields.length)
           return {
             success: false,
             error: new InvalidCronExpression(partitions, invalidFieldIndices),
