@@ -40,8 +40,8 @@ function basicCronValue(value: RegExp) {
     named("value", value),
     optional(
       "range",
-      join(oneOfN("rangeSymbol", /-/, /~/), named("rangeEnd", value))
-    )
+      join(oneOfN("rangeSymbol", /-/, /~/), named("rangeEnd", value)),
+    ),
   );
 
   const listStart = oneOfG(value, range);
@@ -53,9 +53,9 @@ function basicCronValue(value: RegExp) {
         named("wildcard", /\*/),
         named("value", value),
         named("range", range),
-        named("list", join(listStart, many(listItem)))
+        named("list", join(listStart, many(listItem))),
       ),
-      optional("step", joinG(/\//, named("stepValue", /\d+/)))
+      optional("step", joinG(/\//, named("stepValue", /\d+/))),
     ),
     listItemPattern: pattern(namedRange),
   };
@@ -98,7 +98,7 @@ export interface CronSyntax {
   pattern: RegExp;
   fields: CronField[];
   describe: (
-    expression: string
+    expression: string,
   ) => Result<ExpressionDescription, InvalidCronExpression>;
 }
 
@@ -145,23 +145,24 @@ class CronSyntaxBuilder {
         "^" +
           this.fields
             .map((field) =>
-              field.wholePattern.source.replace(/(?<=\()\?\<\w+\>/g, "")
+              field.wholePattern.source.replace(/(?<=\()\?\<\w+\>/g, ""),
             )
             .map((pattern) => pattern.substring(1, pattern.length - 1))
             .join(" ") +
-          "$"
+          "$",
       ),
       describe: (expression) => {
         const partitions = partitionExpression(expression);
 
         const matchResults = this.fields.map(
-          (field, i) => partitions[i] && partitions[i].match(field.wholePattern)
+          (field, i) =>
+            partitions[i] && partitions[i].match(field.wholePattern),
         );
 
         const getInvalidFieldIndices = () => {
           const unmatchedFieldIndices = matchResults.reduce(
             (acc, x, i) => (x && x.length > 0 ? acc : [...acc, i]),
-            [] as number[]
+            [] as number[],
           );
 
           if (unmatchedFieldIndices.length > 0) return unmatchedFieldIndices;
@@ -169,7 +170,7 @@ class CronSyntaxBuilder {
           const fieldMatches = matchResults as RegExpMatchArray[];
           const invalidFields = fieldMatches.reduce((acc, x, i) => {
             const validationResults = this.fields[i].validators.map((f) =>
-              f(x)
+              f(x),
             );
 
             if (validationResults.some((b) => !b)) return [...acc, i];
@@ -232,8 +233,8 @@ export const SYNTAX_LIST = [
       oneOf(
         /[1-9]/,
         /1[012]/,
-        /JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC/
-      )
+        /JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC/,
+      ),
     )
     .addField("day-of-week", oneOf(/[0-7]/, /MON|TUE|WED|THU|FRI|SAT|SUN/))
     .build(),
@@ -247,8 +248,8 @@ export const SYNTAX_LIST = [
       oneOf(
         /[1-9]/,
         /1[012]/,
-        /JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC/
-      )
+        /JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC/,
+      ),
     )
     .addField("day-of-week", oneOf(/[1-7]/, /MON|TUE|WED|THU|FRI|SAT|SUN/))
     .addField("year", oneOf(/19[7-9]\d/, /2[01]\d\d/))
@@ -264,8 +265,8 @@ export const SYNTAX_LIST = [
       oneOf(
         /[1-9]/,
         /1[012]/,
-        /JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC/
-      )
+        /JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC/,
+      ),
     )
     .addField("day-of-week", oneOf(/[0-7]/, /MON|TUE|WED|THU|FRI|SAT|SUN/))
     .addField("year", oneOf(/19[7-9]\d/, /2[01]\d\d/))

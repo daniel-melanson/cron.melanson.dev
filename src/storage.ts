@@ -23,7 +23,7 @@ function usingKey<T>(f: (key: string) => T): StorageOperation<T> {
 
 function applyMembershipUpdate(
   membershipRequirement: boolean,
-  f: (key: string) => void
+  f: (key: string) => void,
 ): StorageOperation<void> {
   return usingKey((key) => {
     if (checkKeyMembership(key) !== membershipRequirement) return;
@@ -39,10 +39,10 @@ export const checkBookmarkMembership = usingKey(checkKeyMembership);
 
 export const addBookmark = applyMembershipUpdate(
   false,
-  (key) => (storage[key] = true)
+  (key) => (storage[key] = true),
 );
 
 export const removeBookmark = applyMembershipUpdate(
   true,
-  (key) => delete storage[key]
+  (key) => delete storage[key],
 );

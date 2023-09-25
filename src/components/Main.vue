@@ -17,11 +17,11 @@ import CronForm from "./CronForm.vue";
 const syntax = ref<CronSyntax>(SYNTAX_LIST[0]);
 const expression = ref(syntax.value.default);
 const isBookmarked = ref(
-  checkBookmarkMembership(syntax.value.type, expression.value)
+  checkBookmarkMembership(syntax.value.type, expression.value),
 );
 
 const descriptionResult = computed(() =>
-  syntax.value.describe(expression.value)
+  syntax.value.describe(expression.value),
 );
 
 function onSyntaxChange(type: CronSyntaxType) {

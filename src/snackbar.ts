@@ -1,6 +1,6 @@
 export function createSnackbar(status: "success" | "failure", message: string) {
   const container = document.getElementById(
-    "snackbar-container"
+    "snackbar-container",
   ) as HTMLDivElement;
 
   const snackbar = document.createElement("p");

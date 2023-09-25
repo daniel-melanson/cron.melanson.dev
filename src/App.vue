@@ -62,7 +62,9 @@ import Footer from "./components/Footer.vue";
   left: 0;
   display: block;
 
-  transition: color 0.3s ease, opacity 0.3s ease;
+  transition:
+    color 0.3s ease,
+    opacity 0.3s ease;
 }
 
 .icon-button .solid {
