@@ -14,7 +14,7 @@ import {
 import CronForm from "./CronForm.vue";
 
 const syntax = ref<CronSyntax>(SYNTAX_LIST[0]);
-const expression = computed(() => syntax.value.default);
+const expression = ref(syntax.value.default);
 const isBookmarked = ref(
   checkBookmarkMembership(syntax.value.type, expression.value)
 );
@@ -25,6 +25,7 @@ const descriptionResult = computed(() =>
 
 function onSyntaxChange(type: CronSyntaxType) {
   syntax.value = SYNTAX_LIST.find((s) => s.type === type)!;
+  expression.value = syntax.value.default;
 }
 
 function onExpressionChange(value: string) {
