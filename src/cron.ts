@@ -216,7 +216,7 @@ export const SYNTAX_LIST = [
   new CronSyntaxBuilder(CronSyntaxType.UNIX, "Unix/Linux specification.")
     .addField("minute", /[0-5]?\d/)
     .addField("hour", oneOf(/[01]?\d/, /2[0-3]/))
-    .addField("dayOfMonth", oneOf(/[0-2]?\d/, /3[01]/))
+    .addField("day-of-month", oneOf(/[0-2]?\d/, /3[01]/))
     .addField(
       "month",
       oneOf(
@@ -225,12 +225,12 @@ export const SYNTAX_LIST = [
         /JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC/
       )
     )
-    .addField("dayOfWeek", oneOf(/[0-7]/, /MON|TUE|WED|THU|FRI|SAT|SUN/))
+    .addField("day-of-week", oneOf(/[0-7]/, /MON|TUE|WED|THU|FRI|SAT|SUN/))
     .build(),
   new CronSyntaxBuilder(CronSyntaxType.AWS, "AWS Lambda cron.")
     .addField("minute", /[0-5]?\d/)
     .addField("hour", oneOf(/[01]?\d/, /2[0-3]/))
-    .addField("dayOfMonth", oneOf(/[0-2]?\d/, /3[01]/))
+    .addField("day-of-month", oneOf(/[0-2]?\d/, /3[01]/))
     .addField(
       "month",
       oneOf(
@@ -239,13 +239,13 @@ export const SYNTAX_LIST = [
         /JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC/
       )
     )
-    .addField("dayOfWeek", oneOf(/[1-7]/, /MON|TUE|WED|THU|FRI|SAT|SUN/))
+    .addField("day-of-week", oneOf(/[1-7]/, /MON|TUE|WED|THU|FRI|SAT|SUN/))
     .addField("year", oneOf(/19[7-9]\d/, /2[01]\d\d/))
     .build(),
   new CronSyntaxBuilder(CronSyntaxType.QUARTZ, "Quarts scheduler cron.")
     .addField("minute", /[0-5]?\d/)
     .addField("hour", oneOf(/[01]?\d/, /2[0-3]/))
-    .addField("dayOfMonth", oneOf(/[0-2]?\d/, /3[01]/))
+    .addField("day-of-month", oneOf(/[0-2]?\d/, /3[01]/))
     .addField(
       "month",
       oneOf(
@@ -254,6 +254,6 @@ export const SYNTAX_LIST = [
         /JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC/
       )
     )
-    .addField("dayOfWeek", oneOf(/[0-7]/, /MON|TUE|WED|THU|FRI|SAT|SUN/))
+    .addField("day-of-week", oneOf(/[0-7]/, /MON|TUE|WED|THU|FRI|SAT|SUN/))
     .build(),
 ] satisfies CronSyntax[];
