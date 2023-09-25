@@ -5,6 +5,7 @@ import {
   CronSyntaxType,
   CronSyntax,
   formatExpression,
+  partitionExpression,
 } from "../cron";
 import {
   checkBookmarkMembership,
@@ -44,6 +45,24 @@ function toggleBookmark() {
   isBookmarked.value = !isBookmarked.value;
 
   // TODO bookmark list
+}
+
+function onFieldClick(index: number) {
+  const input = document.getElementById("expressionInput") as HTMLInputElement;
+
+  if (!input) return;
+
+  const partitions = partitionExpression(expression.value);
+
+  if (index >= partitions.length) return;
+
+  const offset =
+    partitions.reduce((acc, x, i) => (i < index ? acc + x.length : acc), 0) +
+    index;
+
+  const partition = partitions[index];
+  input.focus();
+  input.setSelectionRange(offset, offset + partition.length);
 }
 
 const showNextDates = ref(false);
@@ -91,6 +110,7 @@ const showNextDates = ref(false);
       <a
         v-for="(field, i) in syntax.fields"
         :key="field.name"
+        @click="onFieldClick(i)"
         :class="{
           invalid:
             !descriptionResult.success &&
@@ -112,6 +132,7 @@ const showNextDates = ref(false);
 .fieldTitles > * {
   margin: 0 0.5em;
   padding: 0.15em 0.25em;
+  cursor: pointer;
 }
 
 .fieldTitles .invalid {

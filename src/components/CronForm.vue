@@ -33,6 +33,7 @@ async function copyExpression(expression: string) {
         @change="(event) => $emit('update:syntax', event.target.value)"
       />
       <input
+        id="expressionInput"
         type="text"
         required
         :value="expression"
@@ -56,6 +57,10 @@ async function copyExpression(expression: string) {
 </template>
 
 <style scoped>
+#expressionInput::selection {
+  background-color: var(--color-blue);
+}
+
 .cronForm {
   display: flex;
   justify-content: center;
