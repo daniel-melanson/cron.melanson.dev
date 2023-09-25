@@ -105,10 +105,12 @@ const showNextDates = ref(false);
 .fieldTitles {
   display: flex;
   justify-content: center;
+  margin: 1em 0;
 }
 
 .fieldTitles > * {
-  padding: 0 1em;
+  margin: 0 0.5em;
+  padding: 0.15em 0.25em;
 }
 
 .fieldTitles .invalid {
