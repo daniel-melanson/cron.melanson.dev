@@ -14,7 +14,7 @@ import {
 import CronForm from "./CronForm.vue";
 
 const syntax = ref<CronSyntax>(SYNTAX_LIST[0]);
-const expression = ref("0 12 */2 * *");
+const expression = computed(() => syntax.value.default);
 const isBookmarked = ref(
   checkBookmarkMembership(syntax.value.type, expression.value)
 );

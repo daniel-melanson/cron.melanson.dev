@@ -94,6 +94,7 @@ class InvalidCronExpression extends Error {
 export interface CronSyntax {
   type: CronSyntaxType;
   description: string;
+  default: string;
   pattern: RegExp;
   fields: CronField[];
   describe: (
@@ -106,10 +107,17 @@ class CronSyntaxBuilder {
   private type: CronSyntaxType;
   private description: string;
   private fields: CronField[] = [];
+  private default: string = "";
 
   constructor(type: CronSyntaxType, description: string) {
     this.type = type;
     this.description = description;
+  }
+
+  setDefault(expression: string): this {
+    this.default = expression;
+
+    return this;
   }
 
   addField(
@@ -132,6 +140,7 @@ class CronSyntaxBuilder {
     return {
       type: this.type,
       description: this.description,
+      default: this.default,
       pattern: new RegExp(
         "^" +
           this.fields
@@ -174,7 +183,7 @@ class CronSyntaxBuilder {
         const invalidFieldIndices = getInvalidFieldIndices();
         if (
           invalidFieldIndices.length > 0 ||
-          partitions.length > this.fields.length
+          partitions.length !== this.fields.length
         )
           return {
             success: false,
@@ -214,6 +223,7 @@ export function partitionExpression(expression: string): string[] {
 
 export const SYNTAX_LIST = [
   new CronSyntaxBuilder(CronSyntaxType.UNIX, "Unix/Linux specification.")
+    .setDefault("* * * * *")
     .addField("minute", /[0-5]?\d/)
     .addField("hour", oneOf(/[01]?\d/, /2[0-3]/))
     .addField("day-of-month", oneOf(/[0-2]?\d/, /3[01]/))
@@ -228,6 +238,7 @@ export const SYNTAX_LIST = [
     .addField("day-of-week", oneOf(/[0-7]/, /MON|TUE|WED|THU|FRI|SAT|SUN/))
     .build(),
   new CronSyntaxBuilder(CronSyntaxType.AWS, "AWS Lambda cron.")
+    .setDefault("* * * * * *")
     .addField("minute", /[0-5]?\d/)
     .addField("hour", oneOf(/[01]?\d/, /2[0-3]/))
     .addField("day-of-month", oneOf(/[0-2]?\d/, /3[01]/))
@@ -243,6 +254,8 @@ export const SYNTAX_LIST = [
     .addField("year", oneOf(/19[7-9]\d/, /2[01]\d\d/))
     .build(),
   new CronSyntaxBuilder(CronSyntaxType.QUARTZ, "Quarts scheduler cron.")
+    .setDefault("* * * * * * *")
+    .addField("second", /[0-5]?\d/)
     .addField("minute", /[0-5]?\d/)
     .addField("hour", oneOf(/[01]?\d/, /2[0-3]/))
     .addField("day-of-month", oneOf(/[0-2]?\d/, /3[01]/))
@@ -255,5 +268,6 @@ export const SYNTAX_LIST = [
       )
     )
     .addField("day-of-week", oneOf(/[0-7]/, /MON|TUE|WED|THU|FRI|SAT|SUN/))
+    .addField("year", oneOf(/19[7-9]\d/, /2[01]\d\d/))
     .build(),
 ] satisfies CronSyntax[];
