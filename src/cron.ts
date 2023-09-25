@@ -172,7 +172,10 @@ class CronSyntaxBuilder {
         };
 
         const invalidFieldIndices = getInvalidFieldIndices();
-        if (invalidFieldIndices.length > 0 || partitions.length > this.fields.length)
+        if (
+          invalidFieldIndices.length > 0 ||
+          partitions.length > this.fields.length
+        )
           return {
             success: false,
             error: new InvalidCronExpression(partitions, invalidFieldIndices),
@@ -236,7 +239,8 @@ export const SYNTAX_LIST = [
         /JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC/
       )
     )
-    .addField("dayOfWeek", oneOf(/[0-7]/, /MON|TUE|WED|THU|FRI|SAT|SUN/))
+    .addField("dayOfWeek", oneOf(/[1-7]/, /MON|TUE|WED|THU|FRI|SAT|SUN/))
+    .addField("year", oneOf(/19[7-9]\d/, /2[01]\d\d/))
     .build(),
   new CronSyntaxBuilder(CronSyntaxType.QUARTZ, "Quarts scheduler cron.")
     .addField("minute", /[0-5]?\d/)
