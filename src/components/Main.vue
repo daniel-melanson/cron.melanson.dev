@@ -48,31 +48,43 @@ function toggleBookmark() {
 }
 
 const selectedIndex = ref(-1);
-const getCursorPosition = (input: HTMLInputElement) =>
-  new Promise((res) =>
-    setTimeout(() => res(input.selectionStart ?? 0), 25),
+
+// NOTE this is a hacky solution to a problem that I don't know how to solve
+const fetchSelectionPositions = (input: HTMLInputElement) =>
+  new Promise<{ selectionStart: number; selectionEnd: number }>((res) =>
+    setTimeout(
+      () =>
+        res({
+          selectionStart: input.selectionStart ?? 0,
+          selectionEnd: input.selectionEnd ?? 0,
+        }),
+      25,
+    ),
   );
 
 async function onPossibleCursorPositionChange() {
   const input = document.getElementById("expressionInput") as HTMLInputElement;
-  const cursorPosition = await getCursorPosition(input);
 
-  const fieldIndex = partitionExpression(expression.value)
-    .reduce(
-      (acc, x) => {
-        const lastEnd = acc.length === 0 ? 0 : acc[acc.length - 1][1];
+  const getSelectedIndex = async () => {
+    const { selectionStart, selectionEnd } =
+      await fetchSelectionPositions(input);
 
-        acc.push([lastEnd, lastEnd + x.length + 1]);
-        return acc;
-      },
-      [] as [number, number][],
-    )
-    .findIndex(
-      ([start, end]) => start <= cursorPosition && cursorPosition < end,
-    );
+    return partitionExpression(expression.value)
+      .reduce(
+        (acc, x) => {
+          const lastEnd = acc.length === 0 ? 0 : acc[acc.length - 1][1];
 
-  selectedIndex.value = fieldIndex;
-  console.log(fieldIndex);
+          acc.push([lastEnd, lastEnd + x.length + 1]);
+          return acc;
+        },
+        [] as [number, number][],
+      )
+      .findIndex(
+        ([start, end]) => start <= selectionStart && selectionEnd < end,
+      );
+  };
+
+  selectedIndex.value = await getSelectedIndex();
 }
 
 function onFieldClick(index: number) {
