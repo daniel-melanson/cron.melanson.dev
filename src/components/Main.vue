@@ -13,6 +13,7 @@ import {
   removeBookmark,
 } from "../storage";
 import CronForm from "./CronForm.vue";
+import CronDescription from "./CronDescription.vue";
 
 const syntax = ref<CronSyntax>(SYNTAX_LIST[0]);
 const expression = ref(syntax.value.default);
@@ -106,39 +107,18 @@ function onFieldClick(index: number) {
 
   selectedIndex.value = index;
 }
-
-const showNextDates = ref(false);
 </script>
 
 <template>
   <main>
-    <div class="scheduleDescription">
-      <label class="scheduleLabel">{{
-        descriptionResult.success ? descriptionResult.value.text : "Unknown"
-      }}</label>
-      <ol class="nextDates">
-        <li>
-          <span class="showNextDates" @click="showNextDates = !showNextDates"
-            >next</span
-          >
-          at
-          {{
-            descriptionResult.success
-              ? descriptionResult.value.nextDates[0]
-              : "unknown"
-          }}
-        </li>
-        <template
-          v-for="(nextDate, i) in descriptionResult.success
-            ? descriptionResult.value.nextDates
-            : []"
-        >
-          <li v-if="i > 0 && showNextDates" :key="i">
-            then at {{ descriptionResult.success ? nextDate : "unknown" }}
-          </li>
-        </template>
-      </ol>
-    </div>
+    <CronDescription
+      :text="
+        descriptionResult.success ? descriptionResult.value.text : 'Unknown'
+      "
+      :nextDates="
+        descriptionResult.success ? descriptionResult.value.nextDates : []
+      "
+    />
     <CronForm
       :syntaxKinds="SYNTAX_LIST"
       :expression="expression"
@@ -189,31 +169,5 @@ const showNextDates = ref(false);
 
 .fieldTitles .selected:not(.invalid) {
   background-color: var(--color-blue);
-}
-
-.scheduleDescription {
-  display: flex;
-  flex-direction: column;
-}
-
-.scheduleLabel,
-.nextDates {
-  text-align: center;
-  font-style: italic;
-}
-
-.scheduleLabel {
-  font-size: 24px;
-}
-
-.nextDates {
-  padding: 0;
-  font-size: 16px;
-  list-style: none;
-}
-
-.showNextDates {
-  text-decoration: underline;
-  cursor: pointer;
 }
 </style>
