@@ -37,6 +37,8 @@ async function copyExpression(expression: string) {
         type="text"
         required
         :value="expression"
+        @keydown.passive="$emit('on:keydown')"
+        @click="$emit('on:click')"
         @input.trim="
           (event) => $emit('update:expression', event.target.value ?? '')
         "

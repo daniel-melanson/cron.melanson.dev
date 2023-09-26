@@ -224,7 +224,7 @@ export function partitionExpression(expression: string): string[] {
 
 export const SYNTAX_LIST = [
   new CronSyntaxBuilder(CronSyntaxType.UNIX, "Unix/Linux specification.")
-    .setDefault("* * * * *")
+    .setDefault("0 12 * * FRI")
     .addField("minute", /[0-5]?\d/)
     .addField("hour", oneOf(/[01]?\d/, /2[0-3]/))
     .addField("day-of-month", oneOf(/[0-2]?\d/, /3[01]/))

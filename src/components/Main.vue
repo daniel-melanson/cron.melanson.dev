@@ -47,6 +47,34 @@ function toggleBookmark() {
   // TODO bookmark list
 }
 
+const selectedIndex = ref(-1);
+const getCursorPosition = (input: HTMLInputElement) =>
+  new Promise((res) =>
+    setTimeout(() => res(input.selectionStart ?? 0), 25),
+  );
+
+async function onPossibleCursorPositionChange() {
+  const input = document.getElementById("expressionInput") as HTMLInputElement;
+  const cursorPosition = await getCursorPosition(input);
+
+  const fieldIndex = partitionExpression(expression.value)
+    .reduce(
+      (acc, x) => {
+        const lastEnd = acc.length === 0 ? 0 : acc[acc.length - 1][1];
+
+        acc.push([lastEnd, lastEnd + x.length + 1]);
+        return acc;
+      },
+      [] as [number, number][],
+    )
+    .findIndex(
+      ([start, end]) => start <= cursorPosition && cursorPosition < end,
+    );
+
+  selectedIndex.value = fieldIndex;
+  console.log(fieldIndex);
+}
+
 function onFieldClick(index: number) {
   const input = document.getElementById("expressionInput") as HTMLInputElement;
 
@@ -63,6 +91,8 @@ function onFieldClick(index: number) {
   const partition = partitions[index];
   input.focus();
   input.setSelectionRange(offset, offset + partition.length);
+
+  selectedIndex.value = index;
 }
 
 const showNextDates = ref(false);
@@ -105,16 +135,20 @@ const showNextDates = ref(false);
       @update:expression="onExpressionChange"
       @update:syntax="onSyntaxChange"
       @update:isBookmarked="toggleBookmark"
+      @on:keydown="onPossibleCursorPositionChange"
+      @on:click="onPossibleCursorPositionChange"
     />
     <div class="fieldTitles">
       <a
         v-for="(field, i) in syntax.fields"
         :key="field.name"
+        class="fieldTitle"
         @click="onFieldClick(i)"
         :class="{
           invalid:
             !descriptionResult.success &&
             descriptionResult.error.invalidFieldIndices.includes(i),
+          selected: i === selectedIndex,
         }"
         >{{ field.name }}</a
       >
@@ -129,15 +163,20 @@ const showNextDates = ref(false);
   margin: 1em 0;
 }
 
-.fieldTitles > * {
+.fieldTitle {
   margin: 0 0.5em;
   padding: 0.15em 0.25em;
   cursor: pointer;
+  border-radius: 8px;
+  transition: background-color 0.15s ease;
 }
 
 .fieldTitles .invalid {
   background-color: var(--color-red);
-  border-radius: 8px;
+}
+
+.fieldTitles .selected:not(.invalid) {
+  background-color: var(--color-blue);
 }
 
 .scheduleDescription {
