@@ -61,10 +61,16 @@ function basicCronValue(value: RegExp) {
   };
 }
 
+interface CronVariantDescription {
+  header: string;
+  value: string;
+}
+
 interface CronField {
   name: string;
   wholePattern: RegExp;
   listItemPattern: RegExp;
+  descriptions: CronVariantDescription[];
   validators: CronFieldValidator[];
 }
 
@@ -81,7 +87,7 @@ interface ExpressionDescription {
   nextDates: string[];
 }
 
-class InvalidCronExpression extends Error {
+class InvalidCronExpressionError extends Error {
   public readonly partitions: string[];
   public readonly invalidFieldIndices: number[];
   constructor(partitions: string[], invalidFieldIndices: number[]) {
@@ -99,7 +105,42 @@ export interface CronSyntax {
   fields: CronField[];
   describe: (
     expression: string,
-  ) => Result<ExpressionDescription, InvalidCronExpression>;
+  ) => Result<ExpressionDescription, InvalidCronExpressionError>;
+}
+
+class CronFieldBuilder {
+  private name: string;
+  private wholePattern: RegExp;
+  private listItemPattern: RegExp;
+  private validators: CronFieldValidator[] = [];
+  private descriptions: CronVariantDescription[] = [];
+
+  constructor(name: string, pattern: RegExp) {
+    this.name = name;
+    const { wholePattern, listItemPattern } = basicCronValue(pattern);
+    this.wholePattern = wholePattern;
+    this.listItemPattern = listItemPattern;
+  }
+
+  addValidator(validator: CronFieldValidator): this {
+    this.validators.push(validator);
+    return this;
+  }
+
+  addVariantDescription(header: string, value: string): this {
+    this.descriptions.push({ header, value });
+    return this;
+  }
+
+  build(): CronField {
+    return {
+      name: this.name,
+      wholePattern: this.wholePattern,
+      listItemPattern: this.listItemPattern,
+      validators: this.validators,
+      descriptions: this.descriptions,
+    };
+  }
 }
 
 type CronFieldValidator = (...matchedFields: RegExpMatchArray[]) => boolean;
@@ -120,19 +161,8 @@ class CronSyntaxBuilder {
     return this;
   }
 
-  addField(
-    name: string,
-    pattern: RegExp,
-    ...validators: CronFieldValidator[]
-  ): this {
-    const { wholePattern, listItemPattern } = basicCronValue(pattern);
-    this.fields.push({
-      name,
-      wholePattern,
-      listItemPattern,
-      validators,
-    });
-
+  addField(field: CronFieldBuilder): this {
+    this.fields.push(field.build());
     return this;
   }
 
@@ -188,7 +218,10 @@ class CronSyntaxBuilder {
         )
           return {
             success: false,
-            error: new InvalidCronExpression(partitions, invalidFieldIndices),
+            error: new InvalidCronExpressionError(
+              partitions,
+              invalidFieldIndices,
+            ),
           };
 
         // TODO describe string and get next dates
@@ -225,50 +258,49 @@ export function partitionExpression(expression: string): string[] {
 export const SYNTAX_LIST = [
   new CronSyntaxBuilder(CronSyntaxType.UNIX, "Unix/Linux specification.")
     .setDefault("0 12 * * FRI")
-    .addField("minute", /[0-5]?\d/)
-    .addField("hour", oneOf(/[01]?\d/, /2[0-3]/))
-    .addField("day-of-month", oneOf(/[0-2]?\d/, /3[01]/))
     .addField(
-      "month",
-      oneOf(
-        /[1-9]/,
-        /1[012]/,
-        /JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC/,
+      new CronFieldBuilder("minute", /[0-5]?\d/).addVariantDescription(
+        "0-59",
+        "allowed values",
       ),
     )
-    .addField("day-of-week", oneOf(/[0-7]/, /MON|TUE|WED|THU|FRI|SAT|SUN/))
+    .addField(
+      new CronFieldBuilder(
+        "hour",
+        oneOf(/[01]?\d/, /2[0-3]/),
+      ).addVariantDescription("0-23", "allowed values"),
+    )
+    .addField(
+      new CronFieldBuilder(
+        "day-of-month",
+        oneOf(/[0-2]?\d/, /3[01]/),
+      ).addVariantDescription("1-31", "allowed values"),
+    )
+    .addField(
+      new CronFieldBuilder(
+        "month",
+        oneOf(
+          /[1-9]/,
+          /1[012]/,
+          /JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC/,
+        ),
+      )
+        .addVariantDescription("1-12", "allowed values")
+        .addVariantDescription("JAN-DEC", "alternative values"),
+    )
+    .addField(
+      new CronFieldBuilder(
+        "day-of-week",
+        oneOf(/[0-7]/, /MON|TUE|WED|THU|FRI|SAT|SUN/),
+      )
+        .addVariantDescription("0-7", "allowed values")
+        .addVariantDescription("SUN-SAT", "alternative values"),
+    )
     .build(),
   new CronSyntaxBuilder(CronSyntaxType.AWS, "AWS Lambda cron.")
     .setDefault("* * * * * *")
-    .addField("minute", /[0-5]?\d/)
-    .addField("hour", oneOf(/[01]?\d/, /2[0-3]/))
-    .addField("day-of-month", oneOf(/[0-2]?\d/, /3[01]/))
-    .addField(
-      "month",
-      oneOf(
-        /[1-9]/,
-        /1[012]/,
-        /JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC/,
-      ),
-    )
-    .addField("day-of-week", oneOf(/[1-7]/, /MON|TUE|WED|THU|FRI|SAT|SUN/))
-    .addField("year", oneOf(/19[7-9]\d/, /2[01]\d\d/))
     .build(),
   new CronSyntaxBuilder(CronSyntaxType.QUARTZ, "Quarts scheduler cron.")
     .setDefault("* * * * * * *")
-    .addField("second", /[0-5]?\d/)
-    .addField("minute", /[0-5]?\d/)
-    .addField("hour", oneOf(/[01]?\d/, /2[0-3]/))
-    .addField("day-of-month", oneOf(/[0-2]?\d/, /3[01]/))
-    .addField(
-      "month",
-      oneOf(
-        /[1-9]/,
-        /1[012]/,
-        /JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC/,
-      ),
-    )
-    .addField("day-of-week", oneOf(/[0-7]/, /MON|TUE|WED|THU|FRI|SAT|SUN/))
-    .addField("year", oneOf(/19[7-9]\d/, /2[01]\d\d/))
     .build(),
 ] satisfies CronSyntax[];

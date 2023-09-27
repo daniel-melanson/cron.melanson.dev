@@ -14,6 +14,7 @@ import {
 } from "../storage";
 import CronForm from "./CronForm.vue";
 import CronDescription from "./CronDescription.vue";
+import CronFields from "./CronFields.vue";
 
 const syntax = ref<CronSyntax>(SYNTAX_LIST[0]);
 const expression = ref(syntax.value.default);
@@ -88,7 +89,7 @@ async function onPossibleCursorPositionChange() {
   selectedIndex.value = await getSelectedIndex();
 }
 
-function onFieldClick(index: number) {
+function onFieldSelect(index: number) {
   const input = document.getElementById("expressionInput") as HTMLInputElement;
 
   if (!input) return;
@@ -130,44 +131,15 @@ function onFieldClick(index: number) {
       @on:keydown="onPossibleCursorPositionChange"
       @on:click="onPossibleCursorPositionChange"
     />
-    <div class="fieldTitles">
-      <a
-        v-for="(field, i) in syntax.fields"
-        :key="field.name"
-        class="fieldTitle"
-        @click="onFieldClick(i)"
-        :class="{
-          invalid:
-            !descriptionResult.success &&
-            descriptionResult.error.invalidFieldIndices.includes(i),
-          selected: i === selectedIndex,
-        }"
-        >{{ field.name }}</a
-      >
-    </div>
+    <CronFields
+      :syntax="syntax"
+      :selectedIndex="selectedIndex"
+      :invalidIndices="
+        descriptionResult.success
+          ? []
+          : descriptionResult.error.invalidFieldIndices
+      "
+      @selected:field="onFieldSelect"
+    />
   </main>
 </template>
-
-<style scoped>
-.fieldTitles {
-  display: flex;
-  justify-content: center;
-  margin: 1em 0;
-}
-
-.fieldTitle {
-  margin: 0 0.5em;
-  padding: 0.15em 0.25em;
-  cursor: pointer;
-  border-radius: 8px;
-  transition: background-color 0.15s ease;
-}
-
-.fieldTitles .invalid {
-  background-color: var(--color-red);
-}
-
-.fieldTitles .selected:not(.invalid) {
-  background-color: var(--color-blue);
-}
-</style>
