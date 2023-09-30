@@ -1,11 +1,11 @@
-export enum CronSyntaxType {
+export enum CronSyntaxKind {
   UNIX = "UNIX",
   QUARTZ = "Quartz",
   AWS = "AWS",
 }
 
 export interface CronSyntax {
-  type: CronSyntaxType;
+  kind: CronSyntaxKind;
   description: string;
   default: string;
   pattern: RegExp;

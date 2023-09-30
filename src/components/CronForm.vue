@@ -29,7 +29,7 @@ async function copyExpression(expression: string) {
   <form class="cronForm" :class="{ valid: isValid }">
     <fieldset>
       <Select
-        :options="syntaxKinds.map((s) => s.type)"
+        :options="syntaxKinds.map((s) => s.kind)"
         @change="(event) => $emit('update:syntax', event.target.value)"
       />
       <input

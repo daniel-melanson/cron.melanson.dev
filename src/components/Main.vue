@@ -5,7 +5,7 @@ import {
   formatExpression,
   partitionExpression,
 } from "../cron";
-import type { CronSyntax, CronSyntaxType } from "../cron/types";
+import type { CronSyntax, CronSyntaxKind } from "../cron/types";
 import {
   checkBookmarkMembership,
   addBookmark,
@@ -18,15 +18,15 @@ import CronFields from "./CronFields.vue";
 const syntax = ref<CronSyntax>(CRON_SYNTAX_LIST[0]);
 const expression = ref(syntax.value.default);
 const isBookmarked = ref(
-  checkBookmarkMembership(syntax.value.type, expression.value),
+  checkBookmarkMembership(syntax.value.kind, expression.value),
 );
 
 const descriptionResult = computed(() =>
   syntax.value.describe(expression.value),
 );
 
-function onSyntaxChange(type: CronSyntaxType) {
-  syntax.value = CRON_SYNTAX_LIST.find((s) => s.type === type)!;
+function onSyntaxChange(kind: CronSyntaxKind) {
+  syntax.value = CRON_SYNTAX_LIST.find((s) => s.kind === kind)!;
   expression.value = syntax.value.default;
 }
 
@@ -35,12 +35,12 @@ function onExpressionChange(value: string) {
 }
 
 function toggleBookmark() {
-  const syntaxType = syntax.value.type;
+  const syntaxKind = syntax.value.kind;
 
   if (isBookmarked.value) {
-    removeBookmark(syntaxType, expression.value);
+    removeBookmark(syntaxKind, expression.value);
   } else {
-    addBookmark(syntaxType, expression.value);
+    addBookmark(syntaxKind, expression.value);
   }
 
   isBookmarked.value = !isBookmarked.value;

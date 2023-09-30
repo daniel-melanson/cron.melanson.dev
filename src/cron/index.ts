@@ -2,7 +2,7 @@ import {
   CronFieldValidator,
   CronVariantDescription,
   CronSyntax,
-  CronSyntaxType,
+  CronSyntaxKind,
   CronField,
   InvalidCronExpressionError,
 } from "./types";
@@ -54,13 +54,13 @@ class CronFieldBuilder {
 }
 
 class CronSyntaxBuilder {
-  private type: CronSyntaxType;
+  private kind: CronSyntaxKind;
   private description: string;
   private fields: CronField[] = [];
   private default: string = "";
 
-  constructor(type: CronSyntaxType, description: string) {
-    this.type = type;
+  constructor(kind: CronSyntaxKind, description: string) {
+    this.kind = kind;
     this.description = description;
   }
 
@@ -77,7 +77,7 @@ class CronSyntaxBuilder {
 
   build(): CronSyntax {
     return {
-      type: this.type,
+      kind: this.kind,
       description: this.description,
       default: this.default,
       pattern: new RegExp(
@@ -155,8 +155,8 @@ class CronSyntaxBuilder {
 }
 
 export const CRON_SYNTAX = {
-  [CronSyntaxType.UNIX]: new CronSyntaxBuilder(
-    CronSyntaxType.UNIX,
+  [CronSyntaxKind.UNIX]: new CronSyntaxBuilder(
+    CronSyntaxKind.UNIX,
     "Unix/Linux specification.",
   )
     .setDefault("0 12 * * FRI")
@@ -199,14 +199,14 @@ export const CRON_SYNTAX = {
         .addVariantDescription("SUN-SAT", "alternative values"),
     )
     .build(),
-  [CronSyntaxType.AWS]: new CronSyntaxBuilder(
-    CronSyntaxType.AWS,
+  [CronSyntaxKind.AWS]: new CronSyntaxBuilder(
+    CronSyntaxKind.AWS,
     "AWS Lambda cron.",
   )
     .setDefault("* * * * * *")
     .build(),
-  [CronSyntaxType.QUARTZ]: new CronSyntaxBuilder(
-    CronSyntaxType.QUARTZ,
+  [CronSyntaxKind.QUARTZ]: new CronSyntaxBuilder(
+    CronSyntaxKind.QUARTZ,
     "Quarts scheduler cron.",
   )
     .setDefault("* * * * * * *")
