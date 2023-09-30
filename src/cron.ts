@@ -61,12 +61,12 @@ function basicCronValue(value: RegExp) {
   };
 }
 
-interface CronVariantDescription {
+export interface CronVariantDescription {
   header: string;
   value: string;
 }
 
-interface CronField {
+export interface CronField {
   name: string;
   wholePattern: RegExp;
   listItemPattern: RegExp;
@@ -82,12 +82,12 @@ export enum CronSyntaxType {
 
 type Result<T, E> = { success: true; value: T } | { success: false; error: E };
 
-interface ExpressionDescription {
+export interface CronExpressionDescription {
   text: string;
   nextDates: string[];
 }
 
-class InvalidCronExpressionError extends Error {
+export class InvalidCronExpressionError extends Error {
   public readonly partitions: string[];
   public readonly invalidFieldIndices: number[];
   constructor(partitions: string[], invalidFieldIndices: number[]) {
@@ -105,7 +105,7 @@ export interface CronSyntax {
   fields: CronField[];
   describe: (
     expression: string,
-  ) => Result<ExpressionDescription, InvalidCronExpressionError>;
+  ) => Result<CronExpressionDescription, InvalidCronExpressionError>;
 }
 
 class CronFieldBuilder {
@@ -255,8 +255,11 @@ export function partitionExpression(expression: string): string[] {
   return expression.trim().split(/\s+/);
 }
 
-export const SYNTAX_LIST = [
-  new CronSyntaxBuilder(CronSyntaxType.UNIX, "Unix/Linux specification.")
+export const SYNTAX = {
+  [CronSyntaxType.UNIX]: new CronSyntaxBuilder(
+    CronSyntaxType.UNIX,
+    "Unix/Linux specification.",
+  )
     .setDefault("0 12 * * FRI")
     .addField(
       new CronFieldBuilder("minute", /[0-5]?\d/).addVariantDescription(
@@ -297,10 +300,18 @@ export const SYNTAX_LIST = [
         .addVariantDescription("SUN-SAT", "alternative values"),
     )
     .build(),
-  new CronSyntaxBuilder(CronSyntaxType.AWS, "AWS Lambda cron.")
+  [CronSyntaxType.AWS]: new CronSyntaxBuilder(
+    CronSyntaxType.AWS,
+    "AWS Lambda cron.",
+  )
     .setDefault("* * * * * *")
     .build(),
-  new CronSyntaxBuilder(CronSyntaxType.QUARTZ, "Quarts scheduler cron.")
+  [CronSyntaxType.QUARTZ]: new CronSyntaxBuilder(
+    CronSyntaxType.QUARTZ,
+    "Quarts scheduler cron.",
+  )
     .setDefault("* * * * * * *")
     .build(),
-] satisfies CronSyntax[];
+};
+
+export const SYNTAX_LIST = Object.values(SYNTAX);
