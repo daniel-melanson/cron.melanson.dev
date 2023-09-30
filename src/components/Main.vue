@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import {
-  SYNTAX_LIST,
-  CronSyntaxType,
-  CronSyntax,
+  CRON_SYNTAX_LIST,
   formatExpression,
   partitionExpression,
 } from "../cron";
+import type { CronSyntax, CronSyntaxType } from "../cron/types";
 import {
   checkBookmarkMembership,
   addBookmark,
@@ -16,7 +15,7 @@ import CronForm from "./CronForm.vue";
 import CronDescription from "./CronDescription.vue";
 import CronFields from "./CronFields.vue";
 
-const syntax = ref<CronSyntax>(SYNTAX_LIST[0]);
+const syntax = ref<CronSyntax>(CRON_SYNTAX_LIST[0]);
 const expression = ref(syntax.value.default);
 const isBookmarked = ref(
   checkBookmarkMembership(syntax.value.type, expression.value),
@@ -27,7 +26,7 @@ const descriptionResult = computed(() =>
 );
 
 function onSyntaxChange(type: CronSyntaxType) {
-  syntax.value = SYNTAX_LIST.find((s) => s.type === type)!;
+  syntax.value = CRON_SYNTAX_LIST.find((s) => s.type === type)!;
   expression.value = syntax.value.default;
 }
 
@@ -121,7 +120,7 @@ function onFieldSelect(index: number) {
       "
     />
     <CronForm
-      :syntaxKinds="SYNTAX_LIST"
+      :syntaxKinds="CRON_SYNTAX_LIST"
       :expression="expression"
       :isValid="descriptionResult.success"
       :isBookmarked="isBookmarked"

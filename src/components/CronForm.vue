@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CronSyntax } from "../cron";
+import type { CronSyntax } from "../cron/types";
 import { createSnackbar } from "../snackbar";
 import IconButton from "./IconButton.vue";
 import IconCheckbox from "./IconCheckbox.vue";

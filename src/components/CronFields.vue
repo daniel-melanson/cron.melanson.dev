@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
-import { CronSyntax } from "../cron";
+import type { CronSyntax } from "../cron/types";
 
 const { syntax, selectedIndex } = defineProps<{
   syntax: CronSyntax;

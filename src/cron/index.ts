@@ -1,111 +1,21 @@
-function many(exp: RegExp): RegExp {
-  return new RegExp(`${exp.source}*`);
+import {
+  CronFieldValidator,
+  CronVariantDescription,
+  CronSyntax,
+  CronSyntaxType,
+  CronField,
+  InvalidCronExpressionError,
+} from "./types";
+import { cronValuePattern, oneOf } from "./pattern";
+
+export function formatExpression(expression: string): string {
+  const paddingRight = expression.match(/\s*$/)?.[0] ?? "";
+
+  return expression.trim().split(/\s+/).join(" ") + paddingRight;
 }
 
-function joinG(...exps: RegExp[]): RegExp {
-  return new RegExp(`(${join(...exps).source})`);
-}
-
-function join(...exps: RegExp[]): RegExp {
-  return new RegExp(exps.map((e) => e.source).join(""));
-}
-
-function oneOf(...exps: RegExp[]): RegExp {
-  return new RegExp(`${exps.map((v) => v.source).join("|")}`);
-}
-
-function oneOfG(...exps: RegExp[]): RegExp {
-  return new RegExp(`(${oneOf(...exps).source})`);
-}
-
-function oneOfN(name: string, ...exps: RegExp[]): RegExp {
-  return new RegExp(`(?<${name}>${oneOf(...exps).source})`);
-}
-
-function optional(name: string, exp: RegExp): RegExp {
-  return new RegExp(`(?<${name}>${exp.source})?`);
-}
-
-function named(name: string, exp: RegExp): RegExp {
-  return new RegExp(`(?<${name}>${exp.source})`);
-}
-
-function pattern(...exps: RegExp[]): RegExp {
-  return new RegExp(`^${join(...exps).source}$`);
-}
-
-function basicCronValue(value: RegExp) {
-  const range = join(value, oneOfG(/-/, /~/), value);
-  const namedRange = join(
-    named("value", value),
-    optional(
-      "range",
-      join(oneOfN("rangeSymbol", /-/, /~/), named("rangeEnd", value)),
-    ),
-  );
-
-  const listStart = oneOfG(value, range);
-  const listItem = joinG(/,/, listStart);
-
-  return {
-    wholePattern: pattern(
-      oneOfG(
-        named("wildcard", /\*/),
-        named("value", value),
-        named("range", range),
-        named("list", join(listStart, many(listItem))),
-      ),
-      optional("step", joinG(/\//, named("stepValue", /\d+/))),
-    ),
-    listItemPattern: pattern(namedRange),
-  };
-}
-
-export interface CronVariantDescription {
-  header: string;
-  value: string;
-}
-
-export interface CronField {
-  name: string;
-  wholePattern: RegExp;
-  listItemPattern: RegExp;
-  descriptions: CronVariantDescription[];
-  validators: CronFieldValidator[];
-}
-
-export enum CronSyntaxType {
-  UNIX = "UNIX",
-  QUARTZ = "Quartz",
-  AWS = "AWS",
-}
-
-type Result<T, E> = { success: true; value: T } | { success: false; error: E };
-
-export interface CronExpressionDescription {
-  text: string;
-  nextDates: string[];
-}
-
-export class InvalidCronExpressionError extends Error {
-  public readonly partitions: string[];
-  public readonly invalidFieldIndices: number[];
-  constructor(partitions: string[], invalidFieldIndices: number[]) {
-    super("Invalid cron expression.");
-    this.partitions = partitions;
-    this.invalidFieldIndices = invalidFieldIndices;
-  }
-}
-
-export interface CronSyntax {
-  type: CronSyntaxType;
-  description: string;
-  default: string;
-  pattern: RegExp;
-  fields: CronField[];
-  describe: (
-    expression: string,
-  ) => Result<CronExpressionDescription, InvalidCronExpressionError>;
+export function partitionExpression(expression: string): string[] {
+  return expression.trim().split(/\s+/);
 }
 
 class CronFieldBuilder {
@@ -117,7 +27,7 @@ class CronFieldBuilder {
 
   constructor(name: string, pattern: RegExp) {
     this.name = name;
-    const { wholePattern, listItemPattern } = basicCronValue(pattern);
+    const { wholePattern, listItemPattern } = cronValuePattern(pattern);
     this.wholePattern = wholePattern;
     this.listItemPattern = listItemPattern;
   }
@@ -143,7 +53,6 @@ class CronFieldBuilder {
   }
 }
 
-type CronFieldValidator = (...matchedFields: RegExpMatchArray[]) => boolean;
 class CronSyntaxBuilder {
   private type: CronSyntaxType;
   private description: string;
@@ -245,17 +154,7 @@ class CronSyntaxBuilder {
   }
 }
 
-export function formatExpression(expression: string): string {
-  const paddingRight = expression.match(/\s*$/)?.[0] ?? "";
-
-  return expression.trim().split(/\s+/).join(" ") + paddingRight;
-}
-
-export function partitionExpression(expression: string): string[] {
-  return expression.trim().split(/\s+/);
-}
-
-export const SYNTAX = {
+export const CRON_SYNTAX = {
   [CronSyntaxType.UNIX]: new CronSyntaxBuilder(
     CronSyntaxType.UNIX,
     "Unix/Linux specification.",
@@ -314,4 +213,4 @@ export const SYNTAX = {
     .build(),
 };
 
-export const SYNTAX_LIST = Object.values(SYNTAX);
+export const CRON_SYNTAX_LIST = Object.values(CRON_SYNTAX);

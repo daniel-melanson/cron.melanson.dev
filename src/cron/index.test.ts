@@ -1,4 +1,5 @@
-import { CronSyntax, SYNTAX } from "./cron";
+import type { CronSyntax } from "./types";
+import { CRON_SYNTAX } from "./index";
 
 function expectText(cron: CronSyntax, expression: string, text: string) {
   const description = cron.describe(expression);
@@ -8,7 +9,7 @@ function expectText(cron: CronSyntax, expression: string, text: string) {
 }
 
 describe("UNIX", () => {
-  const cron = SYNTAX.UNIX;
+  const cron = CRON_SYNTAX.UNIX;
 
   it("Correctly describe all wildcards", () => {
     expectText(cron, "* * * * *", "Every minute.");
@@ -28,7 +29,7 @@ describe("UNIX", () => {
 });
 
 describe("AWS", () => {
-  const cron = SYNTAX.AWS;
+  const cron = CRON_SYNTAX.AWS;
 
   it("Correctly describe all wildcards", () => {
     expectText(cron, "* * * * * *", "Every minute.");
@@ -36,7 +37,7 @@ describe("AWS", () => {
 });
 
 describe("Quartz", () => {
-  const cron = SYNTAX.Quartz;
+  const cron = CRON_SYNTAX.Quartz;
 
   it("Correctly describe all wildcards", () => {
     expectText(cron, "* * * * * * *", "Every second.");
