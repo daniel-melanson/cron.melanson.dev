@@ -1,10 +1,12 @@
 import {
   CronFieldValidator,
-  CronVariantDescription,
+  CronFieldVariantDescription,
   CronSyntax,
   CronSyntaxKind,
   CronField,
   InvalidCronExpressionError,
+  CronFieldVariantKind,
+  CronFieldParseResult,
 } from "./types";
 import { cronValuePattern, oneOf } from "./pattern";
 
@@ -23,7 +25,7 @@ class CronFieldBuilder {
   private wholePattern: RegExp;
   private listItemPattern: RegExp;
   private validators: CronFieldValidator[] = [];
-  private descriptions: CronVariantDescription[] = [];
+  private descriptions: CronFieldVariantDescription[] = [];
 
   constructor(name: string, pattern: RegExp) {
     this.name = name;
@@ -48,7 +50,17 @@ class CronFieldBuilder {
       wholePattern: this.wholePattern,
       listItemPattern: this.listItemPattern,
       validators: this.validators,
-      descriptions: this.descriptions,
+      variantDescriptions: this.descriptions,
+      parse: (field) => {
+        const match = field.match(this.wholePattern);
+        if (!match)
+          return {
+            success: false,
+            error: new Error("Field does not match pattern."),
+          };
+
+        return { success: true, value: { kind: CronFieldVariantKind.ANY } };
+      },
     };
   }
 }
@@ -57,7 +69,7 @@ class CronSyntaxBuilder {
   private kind: CronSyntaxKind;
   private description: string;
   private fields: CronField[] = [];
-  private default: string = "";
+  private defaultExpression: string = "";
 
   constructor(kind: CronSyntaxKind, description: string) {
     this.kind = kind;
@@ -65,7 +77,7 @@ class CronSyntaxBuilder {
   }
 
   setDefault(expression: string): this {
-    this.default = expression;
+    this.defaultExpression = expression;
 
     return this;
   }
@@ -79,8 +91,8 @@ class CronSyntaxBuilder {
     return {
       kind: this.kind,
       description: this.description,
-      default: this.default,
-      pattern: new RegExp(
+      defaultExpression: this.defaultExpression,
+      expressionPattern: new RegExp(
         "^" +
           this.fields
             .map((field) =>
@@ -93,34 +105,19 @@ class CronSyntaxBuilder {
       describe: (expression) => {
         const partitions = partitionExpression(expression);
 
-        const matchResults = this.fields.map(
-          (field, i) =>
-            partitions[i] && partitions[i].match(field.wholePattern),
+        const fieldParseResults = this.fields.map((field, i) => {
+          const partition = partitions[i];
+          if (!partition)
+            return { success: false, error: new Error("Missing field value.") };
+
+          return field.parse(partition);
+        }) satisfies CronFieldParseResult[];
+
+        const invalidFieldIndices = fieldParseResults.reduce(
+          (acc, x, i) => (x.success ? acc : [...acc, i]),
+          [] as number[],
         );
 
-        const getInvalidFieldIndices = () => {
-          const unmatchedFieldIndices = matchResults.reduce(
-            (acc, x, i) => (x && x.length > 0 ? acc : [...acc, i]),
-            [] as number[],
-          );
-
-          if (unmatchedFieldIndices.length > 0) return unmatchedFieldIndices;
-
-          const fieldMatches = matchResults as RegExpMatchArray[];
-          const invalidFields = fieldMatches.reduce((acc, x, i) => {
-            const validationResults = this.fields[i].validators.map((f) =>
-              f(x),
-            );
-
-            if (validationResults.some((b) => !b)) return [...acc, i];
-
-            return acc;
-          }, [] as number[]);
-
-          return invalidFields;
-        };
-
-        const invalidFieldIndices = getInvalidFieldIndices();
         if (
           invalidFieldIndices.length > 0 ||
           partitions.length !== this.fields.length
