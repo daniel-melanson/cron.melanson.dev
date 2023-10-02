@@ -30,12 +30,16 @@ export function named(name: string, exp: RegExp): RegExp {
   return new RegExp(`(?<${name}>${exp.source})`);
 }
 
+export function grouped(exp: RegExp): RegExp {
+  return new RegExp(`(${exp.source})`);
+}
+
 export function pattern(...exps: RegExp[]): RegExp {
   return new RegExp(`^${join(...exps).source}$`);
 }
 
 export function cronValuePattern(value: RegExp) {
-  const range = join(value, oneOfG(/-/, /~/), value);
+  const range = join(grouped(value), oneOfG(/-/, /~/), grouped(value));
 
   const listStart = oneOfG(value, range);
   const listItem = joinG(/,/, listStart);

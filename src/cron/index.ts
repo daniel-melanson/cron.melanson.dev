@@ -58,6 +58,7 @@ class CronFieldBuilder {
       validators: this.validators,
       parse: (field) => {
         const match = field.match(this.wholePattern);
+
         if (!match)
           return {
             success: false,
