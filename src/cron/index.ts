@@ -50,6 +50,71 @@ class CronFieldBuilder {
     return this;
   }
 
+  private parseFieldAtom(source: string): number {
+    if (source in this.variantValueMap) return this.variantValueMap[source];
+
+    const number = Number.parseInt(source);
+    if (!Number.isInteger(number)) throw new Error("Not a number.");
+
+    return number;
+  }
+
+  private parseFieldValue(groups: Record<string, string>): CronFieldMatch {
+    if (groups.wildcard) return { kind: "ANY", source: groups.wildcard };
+    else if (groups.value) {
+      return {
+        kind: "VALUE",
+        source: groups.value,
+        value: this.parseFieldAtom(groups.value),
+      };
+    } else if (groups.range) {
+      const range = groups.range;
+      const [rangeStart, rangeEnd] = range.split(/-|~/);
+
+      return {
+        kind: "RANGE",
+        source: groups.range,
+        separator: range.includes("-") ? "-" : "~",
+        from: this.parseFieldAtom(rangeStart),
+        to: this.parseFieldAtom(rangeEnd),
+      };
+    }
+
+    throw new Error(
+      "Unsupported group match: " + JSON.stringify(Object.keys(groups)),
+    );
+  }
+
+  private parseMatch(groups: Record<string, string>): CronFieldMatch {
+    if (groups.list) {
+      const list = groups.list;
+      const items = list.split(/,/).map((item) => {
+        const match = item.match(this.listItemPattern);
+        if (!match || !match.groups)
+          throw new Error("List item does not match pattern.");
+
+        return this.parseMatch(match.groups);
+      });
+
+      return { kind: "LIST", source: groups.list, items };
+    }
+
+    const atom = this.parseFieldValue(groups);
+    if (groups.step) {
+      const stepValue = Number.parseInt(groups.stepValue);
+      if (!Number.isInteger(stepValue)) throw new Error("Not a number.");
+
+      return {
+        kind: "STEP",
+        source: atom.source + groups.step,
+        on: atom,
+        step: stepValue,
+      };
+    }
+
+    return atom;
+  }
+
   build(): CronField {
     return {
       name: this.name,
@@ -68,74 +133,8 @@ class CronFieldBuilder {
         const groups = match.groups!;
         if (!groups) return { success: false, error: new Error("No groups.") };
 
-        const parseValue = (source: string) => {
-          if (source in this.variantValueMap)
-            return this.variantValueMap[source];
-
-          const number = Number.parseInt(source);
-          if (!Number.isInteger(number)) throw new Error("Not a number.");
-
-          return number;
-        };
-
-        const parseMatch = (groups: Record<string, string>): CronFieldMatch => {
-          if (groups.list) {
-            const list = groups.list;
-            const items = list.split(/,/).map((item) => {
-              const match = item.match(this.listItemPattern);
-              if (!match || !match.groups)
-                throw new Error("List item does not match pattern.");
-
-              return parseMatch(match.groups);
-            });
-
-            return { kind: "LIST", source: groups.list, items };
-          }
-
-          const parseAtom = (): CronFieldMatch => {
-            if (groups.wildcard)
-              return { kind: "ANY", source: groups.wildcard };
-            else if (groups.value) {
-              return {
-                kind: "VALUE",
-                source: groups.value,
-                value: parseValue(groups.value),
-              };
-            } else if (groups.range) {
-              const range = groups.range;
-              const [rangeStart, rangeEnd] = range.split(/-|~/);
-
-              return {
-                kind: "RANGE",
-                source: groups.range,
-                separator: range.includes("-") ? "-" : "~",
-                from: parseValue(rangeStart),
-                to: parseValue(rangeEnd),
-              };
-            }
-            throw new Error(
-              "Unsupported group match: " + JSON.stringify(groups),
-            );
-          };
-
-          const atom = parseAtom();
-          if (groups.step) {
-            const stepValue = Number.parseInt(groups.step);
-            if (!Number.isInteger(stepValue)) throw new Error("Not a number.");
-
-            return {
-              kind: "STEP",
-              source: atom.source + groups.step,
-              on: atom,
-              step: stepValue,
-            };
-          }
-
-          return atom;
-        };
-
         try {
-          return parseMatch(groups);
+          return { success: true, value: this.parseMatch(groups) };
         } catch (err) {
           return { success: false, error: err as Error };
         }
