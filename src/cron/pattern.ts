@@ -36,13 +36,6 @@ export function pattern(...exps: RegExp[]): RegExp {
 
 export function cronValuePattern(value: RegExp) {
   const range = join(value, oneOfG(/-/, /~/), value);
-  const namedRange = join(
-    named("value", value),
-    optional(
-      "range",
-      join(oneOfN("rangeSymbol", /-/, /~/), named("rangeEnd", value)),
-    ),
-  );
 
   const listStart = oneOfG(value, range);
   const listItem = joinG(/,/, listStart);
@@ -57,6 +50,8 @@ export function cronValuePattern(value: RegExp) {
       ),
       optional("step", joinG(/\//, named("stepValue", /\d+/))),
     ),
-    listItemPattern: pattern(namedRange),
+    listItemPattern: pattern(
+      oneOfG(named("value", value), named("range", range)),
+    ),
   };
 }

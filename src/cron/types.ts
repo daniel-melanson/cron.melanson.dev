@@ -23,7 +23,6 @@ export type CronFieldParseResult = Result<CronFieldMatch, Error>;
 export interface CronField {
   name: string;
   wholePattern: RegExp;
-  listItemPattern: RegExp;
   variantDescriptions: CronFieldVariantDescription[];
   parse: (field: string) => CronFieldParseResult;
   validators: CronFieldValidator[];
@@ -46,7 +45,7 @@ interface CronFieldAnyMatch {
 interface CronFieldStepMatch {
   kind: "STEP";
   source: string;
-  on: Exclude<CronFieldMatch, CronFieldListMatch | CronFieldStepMatch>[];
+  on: CronFieldMatch;
   step: CronFieldValueMatch;
 }
 
@@ -66,7 +65,7 @@ interface CronFieldRangeMatch {
 
 interface CronFieldListMatch {
   kind: "LIST";
-  items: Exclude<CronFieldMatch, CronFieldListMatch>[];
+  items: CronFieldMatch[];
 }
 
 export interface CronFieldVariantDescription {

@@ -5,8 +5,8 @@ import {
   CronSyntaxKind,
   CronField,
   InvalidCronExpressionError,
-  CronFieldVariantKind,
   CronFieldParseResult,
+  CronFieldMatch,
 } from "./types";
 import { cronValuePattern, oneOf } from "./pattern";
 
@@ -26,6 +26,7 @@ class CronFieldBuilder {
   private listItemPattern: RegExp;
   private validators: CronFieldValidator[] = [];
   private descriptions: CronFieldVariantDescription[] = [];
+  private variantValueMap: Record<string, number> = {};
 
   constructor(name: string, pattern: RegExp) {
     this.name = name;
@@ -44,13 +45,17 @@ class CronFieldBuilder {
     return this;
   }
 
+  setVariantValueMap(map: Record<string, number>): this {
+    this.variantValueMap = map;
+    return this;
+  }
+
   build(): CronField {
     return {
       name: this.name,
       wholePattern: this.wholePattern,
-      listItemPattern: this.listItemPattern,
-      validators: this.validators,
       variantDescriptions: this.descriptions,
+      validators: this.validators,
       parse: (field) => {
         const match = field.match(this.wholePattern);
         if (!match)
@@ -59,7 +64,75 @@ class CronFieldBuilder {
             error: new Error("Field does not match pattern."),
           };
 
-        return { success: true, value: { kind: CronFieldVariantKind.ANY } };
+        const groups = match.groups!;
+        if (!groups) return { success: false, error: new Error("No groups.") };
+
+        const parseValue = (source: string) => {
+          if (source in this.variantValueMap)
+            return this.variantValueMap[source];
+
+          const number = Number.parseInt(source);
+          if (!Number.isInteger(number)) throw new Error("Not a number.");
+
+          return number;
+        };
+
+        const parseMatch = (groups: Record<string, string>): CronFieldMatch => {
+          if (groups.wildcard) return { kind: "ANY", source: groups.wildcard };
+          else if (groups.value) {
+            return {
+              kind: "VALUE",
+              source: groups.value,
+              value: parseValue(groups.value),
+            };
+          } else if (groups.range) {
+            const range = groups.range;
+            const [rangeStart, rangeEnd] = range.split(/-|~/);
+
+            return {
+              kind: "RANGE",
+              source: groups.range,
+              separator: range.includes("-") ? "-" : "~",
+              from: parseValue(rangeStart),
+              to: parseValue(rangeEnd),
+            };
+          } else if (groups.list) {
+            const list = groups.list;
+            const items = list.split(/,/).map((item) => {
+              const match = item.match(this.listItemPattern);
+              if (!match || !match.groups)
+                throw new Error("List item does not match pattern.");
+
+              return parseMatch(match.groups);
+            });
+
+            return { kind: "LIST", items };
+          }
+
+          throw new Error("Unsupported group match: " + JSON.stringify(groups));
+        };
+
+        let result = parseMatch(groups);
+        try {
+          result = parseMatch(groups);
+        } catch (err) {
+          return { success: false, error: err as Error };
+        }
+
+        if (groups.step) {
+          result = {
+            kind: "STEP",
+            source: groups.step,
+            on: result,
+            step: {
+              kind: "VALUE",
+              source: groups.stepValue,
+              value: parseValue(groups.stepValue),
+            },
+          };
+        }
+
+        return { success: true, value: result };
       },
     };
   }
@@ -132,6 +205,9 @@ class CronSyntaxBuilder {
 
         // TODO describe string and get next dates
 
+        // @ts-ignore
+        console.log(fieldParseResults.map((x) => x.value));
+
         return {
           success: true,
           value: {
@@ -150,6 +226,31 @@ class CronSyntaxBuilder {
     };
   }
 }
+
+const MONTH_VARIANT_VALUE_MAP = {
+  JAN: 1,
+  FEB: 2,
+  MAR: 3,
+  APR: 4,
+  MAY: 5,
+  JUN: 6,
+  JUL: 7,
+  AUG: 8,
+  SEP: 9,
+  OCT: 10,
+  NOV: 11,
+  DEC: 12,
+};
+
+const DAY_OF_WEEK_VARIANT_VALUE_MAP = {
+  SUN: 0,
+  MON: 1,
+  TUE: 2,
+  WED: 3,
+  THU: 4,
+  FRI: 5,
+  SAT: 6,
+};
 
 export const CRON_SYNTAX = {
   [CronSyntaxKind.UNIX]: new CronSyntaxBuilder(
@@ -184,6 +285,7 @@ export const CRON_SYNTAX = {
           /JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC/,
         ),
       )
+        .setVariantValueMap(MONTH_VARIANT_VALUE_MAP)
         .addVariantDescription("1-12", "allowed values")
         .addVariantDescription("JAN-DEC", "alternative values"),
     )
@@ -192,6 +294,7 @@ export const CRON_SYNTAX = {
         "day-of-week",
         oneOf(/[0-7]/, /MON|TUE|WED|THU|FRI|SAT|SUN/),
       )
+        .setVariantValueMap(DAY_OF_WEEK_VARIANT_VALUE_MAP)
         .addVariantDescription("0-7", "allowed values")
         .addVariantDescription("SUN-SAT", "alternative values"),
     )
