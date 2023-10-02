@@ -22,8 +22,12 @@ export function oneOfN(name: string, ...exps: RegExp[]): RegExp {
   return new RegExp(`(?<${name}>${oneOf(...exps).source})`);
 }
 
-export function optional(name: string, exp: RegExp): RegExp {
+export function optionalN(name: string, exp: RegExp): RegExp {
   return new RegExp(`(?<${name}>${exp.source})?`);
+}
+
+export function optional(exp: RegExp): RegExp {
+  return new RegExp(`(${exp.source})?`);
 }
 
 export function named(name: string, exp: RegExp): RegExp {
@@ -39,23 +43,32 @@ export function pattern(...exps: RegExp[]): RegExp {
 }
 
 export function cronValuePattern(value: RegExp) {
-  const range = join(grouped(value), oneOfG(/-/, /~/), grouped(value));
+  const valueG = grouped(value);
+  const range = joinG(valueG, oneOfG(/-/, /~/), valueG);
+  const step = joinG(/\//, /\d+/);
 
-  const listStart = oneOfG(value, range);
+  const listStart = joinG(oneOfG(value, range), optional(step));
   const listItem = joinG(/,/, listStart);
 
   return {
     wholePattern: pattern(
       oneOfG(
-        named("wildcard", /\*/),
-        named("value", value),
-        named("range", range),
+        joinG(
+          oneOfG(
+            named("wildcard", /\*/),
+            named("value", value),
+            named("range", range),
+          ),
+          optionalN("step", step),
+        ),
         named("list", join(listStart, many(listItem))),
       ),
-      optional("step", joinG(/\//, named("stepValue", /\d+/))),
     ),
     listItemPattern: pattern(
-      oneOfG(named("value", value), named("range", range)),
+      joinG(
+        oneOfG(named("value", value), named("range", range)),
+        optionalN("step", step),
+      ),
     ),
   };
 }

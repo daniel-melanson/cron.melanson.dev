@@ -79,25 +79,7 @@ class CronFieldBuilder {
         };
 
         const parseMatch = (groups: Record<string, string>): CronFieldMatch => {
-          if (groups.wildcard) return { kind: "ANY", source: groups.wildcard };
-          else if (groups.value) {
-            return {
-              kind: "VALUE",
-              source: groups.value,
-              value: parseValue(groups.value),
-            };
-          } else if (groups.range) {
-            const range = groups.range;
-            const [rangeStart, rangeEnd] = range.split(/-|~/);
-
-            return {
-              kind: "RANGE",
-              source: groups.range,
-              separator: range.includes("-") ? "-" : "~",
-              from: parseValue(rangeStart),
-              to: parseValue(rangeEnd),
-            };
-          } else if (groups.list) {
+          if (groups.list) {
             const list = groups.list;
             const items = list.split(/,/).map((item) => {
               const match = item.match(this.listItemPattern);
@@ -107,33 +89,56 @@ class CronFieldBuilder {
               return parseMatch(match.groups);
             });
 
-            return { kind: "LIST", source: groups.list,  items };
+            return { kind: "LIST", source: groups.list, items };
           }
 
-          throw new Error("Unsupported group match: " + JSON.stringify(groups));
+          const parseAtom = (): CronFieldMatch => {
+            if (groups.wildcard)
+              return { kind: "ANY", source: groups.wildcard };
+            else if (groups.value) {
+              return {
+                kind: "VALUE",
+                source: groups.value,
+                value: parseValue(groups.value),
+              };
+            } else if (groups.range) {
+              const range = groups.range;
+              const [rangeStart, rangeEnd] = range.split(/-|~/);
+
+              return {
+                kind: "RANGE",
+                source: groups.range,
+                separator: range.includes("-") ? "-" : "~",
+                from: parseValue(rangeStart),
+                to: parseValue(rangeEnd),
+              };
+            }
+            throw new Error(
+              "Unsupported group match: " + JSON.stringify(groups),
+            );
+          };
+
+          const atom = parseAtom();
+          if (groups.step) {
+            const stepValue = Number.parseInt(groups.step);
+            if (!Number.isInteger(stepValue)) throw new Error("Not a number.");
+
+            return {
+              kind: "STEP",
+              source: atom.source + groups.step,
+              on: atom,
+              step: stepValue,
+            };
+          }
+
+          return atom;
         };
 
-        let result = parseMatch(groups);
         try {
-          result = parseMatch(groups);
+          return parseMatch(groups);
         } catch (err) {
           return { success: false, error: err as Error };
         }
-
-        if (groups.step) {
-          result = {
-            kind: "STEP",
-            source: result.source + groups.step,
-            on: result,
-            step: {
-              kind: "VALUE",
-              source: groups.stepValue,
-              value: parseValue(groups.stepValue),
-            },
-          };
-        }
-
-        return { success: true, value: result };
       },
     };
   }
@@ -162,20 +167,22 @@ class CronSyntaxBuilder {
   }
 
   build(): CronSyntax {
+    const expressionPattern = new RegExp(
+      "^" +
+        this.fields
+          .map((field) =>
+            field.wholePattern.source.replace(/(?<=\()\?\<\w+\>/g, ""),
+          )
+          .map((pattern) => pattern.substring(1, pattern.length - 1))
+          .join(" ") +
+        "$",
+    );
+
     return {
       kind: this.kind,
       description: this.description,
       defaultExpression: this.defaultExpression,
-      expressionPattern: new RegExp(
-        "^" +
-          this.fields
-            .map((field) =>
-              field.wholePattern.source.replace(/(?<=\()\?\<\w+\>/g, ""),
-            )
-            .map((pattern) => pattern.substring(1, pattern.length - 1))
-            .join(" ") +
-          "$",
-      ),
+      expressionPattern: expressionPattern,
       describe: (expression) => {
         const partitions = partitionExpression(expression);
 

@@ -46,7 +46,7 @@ interface CronFieldStepMatch {
   kind: "STEP";
   source: string;
   on: CronFieldMatch;
-  step: CronFieldValueMatch;
+  step: number;
 }
 
 interface CronFieldValueMatch {
