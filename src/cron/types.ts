@@ -65,6 +65,7 @@ interface CronFieldRangeMatch {
 
 interface CronFieldListMatch {
   kind: "LIST";
+  source: string;
   items: CronFieldMatch[];
 }
 

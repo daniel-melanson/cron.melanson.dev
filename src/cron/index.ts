@@ -106,7 +106,7 @@ class CronFieldBuilder {
               return parseMatch(match.groups);
             });
 
-            return { kind: "LIST", items };
+            return { kind: "LIST", source: groups.list,  items };
           }
 
           throw new Error("Unsupported group match: " + JSON.stringify(groups));
@@ -122,7 +122,7 @@ class CronFieldBuilder {
         if (groups.step) {
           result = {
             kind: "STEP",
-            source: groups.step,
+            source: result.source + groups.step,
             on: result,
             step: {
               kind: "VALUE",
