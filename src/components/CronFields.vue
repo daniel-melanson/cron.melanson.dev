@@ -35,13 +35,13 @@ const emits = defineEmits(["selected:field"]);
     </tr>
     <tr>
       <th>~</th>
-      <td>random value</td>
+      <td>range of values (pick random)</td>
     </tr>
     <tr>
       <th>,</th>
       <td>list separator</td>
     </tr>
-    <tr v-for="desc in syntax.fields[selectedIndex]?.descriptions ?? []">
+    <tr v-for="desc in syntax.fields[selectedIndex]?.variantDescriptions ?? []">
       <th>{{ desc.header }}</th>
       <td>{{ desc.value }}</td>
     </tr>
@@ -84,12 +84,12 @@ const emits = defineEmits(["selected:field"]);
 .fieldVariants th {
   text-align: right;
   padding-right: 1rem;
-  width: 10rem;
+  width: 15rem;
   font-weight: bold;
 }
 
 .fieldVariants td {
-  width: 10rem;
+  width: 15rem;
   text-align: left;
   padding-left: 1rem;
 }
