@@ -1,5 +1,5 @@
 import {
-  CronFieldValidator,
+  CronExpressionValidator,
   CronFieldVariantDescription,
   CronSyntax,
   CronSyntaxKind,
@@ -7,8 +7,12 @@ import {
   InvalidCronExpressionError,
   CronFieldParseResult,
   CronFieldMatch,
+  CronFieldKind,
+  CronExpressionMatch,
+  Result,
 } from "./types";
 import { cronValuePattern, oneOf } from "./pattern";
+import { describe } from "./describe";
 
 export function formatExpression(expression: string): string {
   const paddingRight = expression.match(/\s*$/)?.[0] ?? "";
@@ -21,23 +25,17 @@ export function partitionExpression(expression: string): string[] {
 }
 
 class CronFieldBuilder {
-  private name: string;
+  private kind: CronFieldKind;
   private wholePattern: RegExp;
   private listItemPattern: RegExp;
-  private validators: CronFieldValidator[] = [];
   private descriptions: CronFieldVariantDescription[] = [];
   private variantValueMap: Record<string, number> = {};
 
-  constructor(name: string, pattern: RegExp) {
-    this.name = name;
+  constructor(kind: CronFieldKind, pattern: RegExp) {
+    this.kind = kind;
     const { wholePattern, listItemPattern } = cronValuePattern(pattern);
     this.wholePattern = wholePattern;
     this.listItemPattern = listItemPattern;
-  }
-
-  addValidator(validator: CronFieldValidator): this {
-    this.validators.push(validator);
-    return this;
   }
 
   addVariantDescription(header: string, value: string): this {
@@ -117,10 +115,9 @@ class CronFieldBuilder {
 
   build(): CronField {
     return {
-      name: this.name,
+      kind: this.kind,
       wholePattern: this.wholePattern,
       variantDescriptions: this.descriptions,
-      validators: this.validators,
       parse: (field) => {
         const match = field.match(this.wholePattern);
 
@@ -148,6 +145,7 @@ class CronSyntaxBuilder {
   private description: string;
   private fields: CronField[] = [];
   private defaultExpression: string = "";
+  private validators: CronExpressionValidator[] = [];
 
   constructor(kind: CronSyntaxKind, description: string) {
     this.kind = kind;
@@ -156,6 +154,12 @@ class CronSyntaxBuilder {
 
   setDefault(expression: string): this {
     this.defaultExpression = expression;
+
+    return this;
+  }
+
+  addValidator(validator: CronExpressionValidator): this {
+    this.validators.push(validator);
 
     return this;
   }
@@ -177,6 +181,12 @@ class CronSyntaxBuilder {
         "$",
     );
 
+    const getUnsuccessfulIndices = (results: Result<unknown, unknown>[]) =>
+      results.reduce(
+        (acc, x, i) => (x.success ? acc : [...acc, i]),
+        [] as number[],
+      );
+
     return {
       kind: this.kind,
       description: this.description,
@@ -185,6 +195,7 @@ class CronSyntaxBuilder {
       describe: (expression) => {
         const partitions = partitionExpression(expression);
 
+        // Parse each partition into a field.
         const fieldParseResults = this.fields.map((field, i) => {
           const partition = partitions[i];
           if (!partition)
@@ -193,15 +204,36 @@ class CronSyntaxBuilder {
           return field.parse(partition);
         }) satisfies CronFieldParseResult[];
 
-        const invalidFieldIndices = fieldParseResults.reduce(
-          (acc, x, i) => (x.success ? acc : [...acc, i]),
-          [] as number[],
-        );
-
+        // Fail if any field was not parsed successfully.
+        // TODO Do something with error values?
+        const unparsedFieldIndices = getUnsuccessfulIndices(fieldParseResults);
         if (
-          invalidFieldIndices.length > 0 ||
+          unparsedFieldIndices.length > 0 ||
           partitions.length !== this.fields.length
         )
+          return {
+            success: false,
+            error: new InvalidCronExpressionError(
+              partitions,
+              unparsedFieldIndices,
+            ),
+          };
+
+        // Build a match object from the parsed fields.
+        const match = fieldParseResults.reduce((acc, x, i) => {
+          if (!x.success) throw x.error;
+
+          const field = this.fields[i];
+          return { ...acc, [field.kind]: x.value };
+        }, {} as CronExpressionMatch);
+
+        // Validate the match object.
+        // TODO Do something with error values?
+        const invalidFieldIndices = getUnsuccessfulIndices(
+          this.validators.map((validator) => validator(match)),
+        );
+
+        if (invalidFieldIndices.length > 0) {
           return {
             success: false,
             error: new InvalidCronExpressionError(
@@ -209,24 +241,11 @@ class CronSyntaxBuilder {
               invalidFieldIndices,
             ),
           };
-
-        // TODO describe string and get next dates
-
-        // @ts-ignore
-        console.log(fieldParseResults.map((x) => x.value));
+        }
 
         return {
           success: true,
-          value: {
-            text: "At 12:00 on every 2nd day-of-month.",
-            nextDates: [
-              "2023-10-02 12:00:00",
-              "2023-10-04 12:00:00",
-              "2023-10-06 12:00:00",
-              "2023-10-08 12:00:00",
-              "2023-10-10 12:00:00",
-            ],
-          },
+          value: describe(match),
         };
       },
       fields: this.fields,
@@ -266,26 +285,26 @@ export const CRON_SYNTAX = {
   )
     .setDefault("0 12 * * FRI")
     .addField(
-      new CronFieldBuilder("minute", /[0-5]?\d/).addVariantDescription(
-        "0-59",
-        "allowed values",
-      ),
+      new CronFieldBuilder(
+        CronFieldKind.MINUTE,
+        /[0-5]?\d/,
+      ).addVariantDescription("0-59", "allowed values"),
     )
     .addField(
       new CronFieldBuilder(
-        "hour",
+        CronFieldKind.HOUR,
         oneOf(/[01]?\d/, /2[0-3]/),
       ).addVariantDescription("0-23", "allowed values"),
     )
     .addField(
       new CronFieldBuilder(
-        "day-of-month",
+        CronFieldKind.DAY_OF_MONTH,
         oneOf(/[0-2]?\d/, /3[01]/),
       ).addVariantDescription("1-31", "allowed values"),
     )
     .addField(
       new CronFieldBuilder(
-        "month",
+        CronFieldKind.MONTH,
         oneOf(
           /[1-9]/,
           /1[012]/,
@@ -298,11 +317,11 @@ export const CRON_SYNTAX = {
     )
     .addField(
       new CronFieldBuilder(
-        "day-of-week",
+        CronFieldKind.DAY_OF_WEEK,
         oneOf(/[0-7]/, /MON|TUE|WED|THU|FRI|SAT|SUN/),
       )
         .setVariantValueMap(DAY_OF_WEEK_VARIANT_VALUE_MAP)
-        .addVariantDescription("0-7", "allowed values")
+        .addVariantDescription("0-7", "allowed values (Sunday is 0 or 7)")
         .addVariantDescription("SUN-SAT", "alternative values"),
     )
     .build(),

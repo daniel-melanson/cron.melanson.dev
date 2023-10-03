@@ -20,15 +20,29 @@ export interface CronSyntax {
 }
 
 export type CronFieldParseResult = Result<CronFieldMatch, Error>;
+
+export enum CronFieldKind {
+  SECOND = "SECOND",
+  MINUTE = "MINUTE",
+  HOUR = "HOUR",
+  DAY_OF_MONTH = "DAY_OF_MONTH",
+  MONTH = "MONTH",
+  DAY_OF_WEEK = "DAY_OF_WEEK",
+  YEAR = "YEAR",
+}
+
+export type CronExpressionMatch = Record<CronFieldKind, CronFieldMatch>;
+
 export interface CronField {
-  name: string;
+  kind: CronFieldKind;
   wholePattern: RegExp;
   variantDescriptions: CronFieldVariantDescription[];
   parse: (field: string) => CronFieldParseResult;
-  validators: CronFieldValidator[];
 }
 
-export type CronFieldValidator = (...matches: CronFieldMatch[]) => boolean;
+export type CronExpressionValidator = (
+  match: CronExpressionMatch,
+) => Result<never, Error>;
 
 export type CronFieldMatch =
   | CronFieldStepMatch
