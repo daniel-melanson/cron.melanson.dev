@@ -26,7 +26,7 @@ async function copyExpression(expression: string) {
 </script>
 
 <template>
-  <form class="cronForm" :class="{ valid: isValid }">
+  <form class="cron-form" :class="{ valid: isValid }">
     <fieldset>
       <Select
         :options="syntaxKinds.map((s) => s.kind)"
@@ -59,24 +59,24 @@ async function copyExpression(expression: string) {
 </template>
 
 <style scoped>
-#expressionInput::selection {
+#expression-input::selection {
   background-color: var(--color-blue);
 }
 
-.cronForm {
+.cron-form {
   display: flex;
   justify-content: center;
 }
 
-.cronForm:not(.valid) fieldset {
+.cron-form:not(.valid) fieldset {
   border-color: var(--color-red);
 }
 
-.cronForm.valid fieldset {
+.cron-form.valid fieldset {
   border-color: var(--color-green);
 }
 
-.cronForm fieldset {
+.cron-form fieldset {
   display: flex;
   align-items: center;
   border-color: currentColor;
@@ -88,7 +88,7 @@ async function copyExpression(expression: string) {
   margin: 0;
 }
 
-.cronForm input {
+.cron-form input {
   padding: 0;
   background: none;
   border: none;
@@ -98,7 +98,7 @@ async function copyExpression(expression: string) {
   text-transform: uppercase;
 }
 
-.cronForm input:focus {
+.cron-form input:focus {
   outline: none;
 }
 </style>

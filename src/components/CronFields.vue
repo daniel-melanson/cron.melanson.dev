@@ -10,11 +10,11 @@ defineEmits(["selected:field"]);
 </script>
 
 <template>
-  <div class="fieldTitles">
+  <div class="field-titles">
     <a
       v-for="(field, i) in syntax.fields"
       :key="field.kind"
-      class="fieldTitle"
+      class="field-title"
       @click="$emit('selected:field', i)"
       :class="{
         invalid: invalidIndices.includes(i),
@@ -23,7 +23,7 @@ defineEmits(["selected:field"]);
       >{{ field.kind.replace(/_/g, "-").toLowerCase() }}</a
     >
   </div>
-  <table class="fieldVariants">
+  <table class="field-variants">
     <tr>
       <th>*</th>
       <td>any value</td>
@@ -48,13 +48,13 @@ defineEmits(["selected:field"]);
 </template>
 
 <style scoped>
-.fieldTitles {
+.field-titles {
   display: flex;
   justify-content: center;
   margin: 1em 0;
 }
 
-.fieldTitle {
+.field-title {
   margin: 0 0.5em;
   padding: 0.15em 0.25em;
   cursor: pointer;
@@ -62,15 +62,15 @@ defineEmits(["selected:field"]);
   transition: background-color 0.15s ease;
 }
 
-.fieldTitle.invalid {
+.field-title.invalid {
   background-color: var(--color-red);
 }
 
-.fieldTitle.selected:not(.invalid) {
+.field-title.selected:not(.invalid) {
   background-color: var(--color-blue);
 }
 
-.fieldVariants {
+.field-variants {
   margin-left: auto;
   margin-right: auto;
   background-color: var(--color-dark-grey);
@@ -80,14 +80,14 @@ defineEmits(["selected:field"]);
   list-style: none;
 }
 
-.fieldVariants th {
+.field-variants th {
   text-align: right;
   padding-right: 1rem;
   width: 17rem;
   font-weight: bold;
 }
 
-.fieldVariants td {
+.field-variants td {
   width: 17rem;
   text-align: left;
   padding-left: 1rem;
