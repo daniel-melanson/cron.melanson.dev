@@ -321,7 +321,7 @@ export const CRON_SYNTAX = {
         oneOf(/[0-7]/, /MON|TUE|WED|THU|FRI|SAT|SUN/),
       )
         .setVariantValueMap(DAY_OF_WEEK_VARIANT_VALUE_MAP)
-        .addVariantDescription("0-7", "allowed values (Sunday is 0 or 7)")
+        .addVariantDescription("0-7", "allowed values (sunday is 0 or 7)")
         .addVariantDescription("SUN-SAT", "alternative values"),
     )
     .build(),

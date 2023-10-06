@@ -31,7 +31,10 @@ export enum CronFieldKind {
   YEAR = "YEAR",
 }
 
-export type CronExpressionMatch = Record<CronFieldKind, CronFieldMatch>;
+export type CronExpressionMatch = Record<
+  Exclude<CronFieldKind, "SECOND" | "YEAR">,
+  CronFieldMatch
+> & { SECOND: CronFieldMatch | undefined; YEAR: CronFieldMatch | undefined };
 
 export interface CronField {
   kind: CronFieldKind;
@@ -88,8 +91,13 @@ export interface CronFieldVariantDescription {
   value: string;
 }
 
+export type CronFieldTextRanges = Map<CronFieldKind, [number, number]>;
+
 export interface CronExpressionDescription {
-  text: string;
+  text: {
+    source: string;
+    ranges?: CronFieldTextRanges;
+  };
   nextDates: string[];
 }
 

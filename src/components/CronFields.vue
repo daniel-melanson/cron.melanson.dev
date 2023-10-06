@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import type { CronSyntax } from "../cron/types";
 
-const { syntax, selectedIndex } = defineProps<{
+defineProps<{
   syntax: CronSyntax;
-  selectedIndex: number;
+  selectedFieldIndex: number;
   invalidIndices: number[];
 }>();
 defineEmits(["selected:field"]);
-
 </script>
 
 <template>
@@ -19,9 +18,9 @@ defineEmits(["selected:field"]);
       @click="$emit('selected:field', i)"
       :class="{
         invalid: invalidIndices.includes(i),
-        selected: i === selectedIndex,
+        selected: i === selectedFieldIndex,
       }"
-      >{{ field.kind.replaceAll("_", "-").toLowerCase() }}</a
+      >{{ field.kind.replace(/_/g, "-").toLowerCase() }}</a
     >
   </div>
   <table class="fieldVariants">
@@ -41,7 +40,7 @@ defineEmits(["selected:field"]);
       <th>,</th>
       <td>list separator</td>
     </tr>
-    <tr v-for="desc in syntax.fields[selectedIndex]?.variantDescriptions ?? []">
+    <tr v-for="desc in syntax.fields[selectedFieldIndex]?.variantDescriptions ?? []">
       <th>{{ desc.header }}</th>
       <td>{{ desc.value }}</td>
     </tr>

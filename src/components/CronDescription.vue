@@ -1,17 +1,46 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
+import { CronExpressionDescription, CronField, CronSyntax } from "../cron/types";
 
-defineProps<{ text: string; nextDates: string[] }>();
+type Props = CronExpressionDescription & {
+  selectedField?: CronField;
+};
+
+const props = defineProps<Props>();
 
 const showNextDates = ref(false);
+
+const labelText = computed(() => {
+  const { source, ranges } = props.text;
+  const selectedField = props.selectedField;
+
+  if (!ranges || !selectedField) return source;
+
+  let result = "";
+  let currentIndex = 0;
+
+  for (const [key, [start, end]] of ranges.entries()) {
+    result += source.substring(currentIndex, start);
+
+    result += `<span class="${
+      key === selectedField.kind ? "highlight" : ""
+    }">${source.substring(start, end)}</span>`;
+
+    currentIndex = end;
+  }
+
+  result += source.substring(currentIndex);
+
+  return result;
+});
 </script>
 
 <template>
-  <div class="scheduleDescription">
-    <label class="scheduleLabel">{{ text }}</label>
-    <ol class="nextDates">
+  <div class="schedule-description">
+    <label class="schedule-label" v-html="labelText" />
+    <ol class="next-dates">
       <li>
-        <span class="showNextDates" @click="showNextDates = !showNextDates"
+        <span class="show-next-dates" @click="showNextDates = !showNextDates"
           >next</span
         >
         at
@@ -25,28 +54,28 @@ const showNextDates = ref(false);
 </template>
 
 <style scoped>
-.scheduleDescription {
+.schedule-description {
   display: flex;
   flex-direction: column;
 }
 
-.scheduleLabel,
-.nextDates {
+.schedule-label,
+.next-dates {
   text-align: center;
   font-style: italic;
 }
 
-.scheduleLabel {
+.schedule-label {
   font-size: 24px;
 }
 
-.nextDates {
+.next-dates {
   padding: 0;
   font-size: 16px;
   list-style: none;
 }
 
-.showNextDates {
+.show-next-dates {
   text-decoration: underline;
   cursor: pointer;
 }

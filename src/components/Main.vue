@@ -5,7 +5,7 @@ import {
   formatExpression,
   partitionExpression,
 } from "../cron";
-import type { CronSyntax, CronSyntaxKind } from "../cron/types";
+import { CronSyntax, CronSyntaxKind } from "../cron/types";
 import {
   checkBookmarkMembership,
   addBookmark,
@@ -48,7 +48,11 @@ function toggleBookmark() {
   // TODO bookmark list
 }
 
-const selectedIndex = ref(-1);
+const selectedFieldIndex = ref(-1);
+const selectedField = computed(() => {
+  if (selectedFieldIndex.value === -1) return undefined;
+  return syntax.value.fields[selectedFieldIndex.value];
+});
 
 // NOTE this is a hacky solution to a problem that I don't know how to solve
 const fetchSelectionPositions = (input: HTMLInputElement) =>
@@ -85,7 +89,7 @@ async function onPossibleCursorPositionChange() {
       );
   };
 
-  selectedIndex.value = await getSelectedIndex();
+  selectedFieldIndex.value = await getSelectedIndex();
 }
 
 function onFieldSelect(index: number) {
@@ -105,7 +109,7 @@ function onFieldSelect(index: number) {
   input.focus();
   input.setSelectionRange(offset, offset + partition.length);
 
-  selectedIndex.value = index;
+  selectedFieldIndex.value = index;
 }
 </script>
 
@@ -113,8 +117,11 @@ function onFieldSelect(index: number) {
   <main>
     <CronDescription
       :text="
-        descriptionResult.success ? descriptionResult.value.text : 'Unknown'
+        descriptionResult.success
+          ? descriptionResult.value.text
+          : { source: 'Unknown' }
       "
+      :selectedField="selectedField"
       :nextDates="
         descriptionResult.success ? descriptionResult.value.nextDates : []
       "
@@ -132,7 +139,7 @@ function onFieldSelect(index: number) {
     />
     <CronFields
       :syntax="syntax"
-      :selectedIndex="selectedIndex"
+      :selectedFieldIndex="selectedFieldIndex"
       :invalidIndices="
         descriptionResult.success
           ? []
