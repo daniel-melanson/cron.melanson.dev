@@ -6,7 +6,7 @@ const { syntax, selectedIndex } = defineProps<{
   selectedIndex: number;
   invalidIndices: number[];
 }>();
-const emits = defineEmits(["selected:field"]);
+defineEmits(["selected:field"]);
 
 </script>
 
@@ -14,14 +14,14 @@ const emits = defineEmits(["selected:field"]);
   <div class="fieldTitles">
     <a
       v-for="(field, i) in syntax.fields"
-      :key="field.name"
+      :key="field.kind"
       class="fieldTitle"
       @click="$emit('selected:field', i)"
       :class="{
         invalid: invalidIndices.includes(i),
         selected: i === selectedIndex,
       }"
-      >{{ field.name }}</a
+      >{{ field.kind.replaceAll("_", "-").toLowerCase() }}</a
     >
   </div>
   <table class="fieldVariants">
@@ -84,12 +84,12 @@ const emits = defineEmits(["selected:field"]);
 .fieldVariants th {
   text-align: right;
   padding-right: 1rem;
-  width: 15rem;
+  width: 17rem;
   font-weight: bold;
 }
 
 .fieldVariants td {
-  width: 15rem;
+  width: 17rem;
   text-align: left;
   padding-left: 1rem;
 }
