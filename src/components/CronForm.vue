@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { onMounted, onUpdated } from "vue";
+import { formatExpression } from "../cron";
 import type { CronSyntax } from "../cron/types";
 import { createSnackbar } from "../snackbar";
 import IconButton from "./IconButton.vue";
@@ -23,6 +25,11 @@ async function copyExpression(expression: string) {
 
   createSnackbar("success", `Copied '${expression}' to clipboard.`);
 }
+
+onUpdated(() => {
+  console.log("updated");
+});
+
 </script>
 
 <template>
@@ -33,7 +40,7 @@ async function copyExpression(expression: string) {
         @change="(event) => $emit('update:syntax', event.target.value)"
       />
       <input
-        id="expressionInput"
+        id="expression-input"
         type="text"
         required
         :value="expression"

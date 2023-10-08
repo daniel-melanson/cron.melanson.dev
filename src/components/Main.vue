@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watchEffect } from "vue";
 import {
   CRON_SYNTAX_LIST,
   formatExpression,
-  partitionExpression,
+  getFieldIndices,
 } from "../cron";
 import { CronSyntax, CronSyntaxKind } from "../cron/types";
 import {
@@ -68,46 +68,31 @@ const fetchSelectionPositions = (input: HTMLInputElement) =>
   );
 
 async function onPossibleCursorPositionChange() {
-  const input = document.getElementById("expressionInput") as HTMLInputElement;
+  const input = document.getElementById("expression-input") as HTMLInputElement;
 
   const getSelectedIndex = async () => {
     const { selectionStart, selectionEnd } =
       await fetchSelectionPositions(input);
 
-    return partitionExpression(expression.value)
-      .reduce(
-        (acc, x) => {
-          const lastEnd = acc.length === 0 ? 0 : acc[acc.length - 1][1];
-
-          acc.push([lastEnd, lastEnd + x.length + 1]);
-          return acc;
-        },
-        [] as [number, number][],
-      )
-      .findIndex(
-        ([start, end]) => start <= selectionStart && selectionEnd < end,
-      );
+    return getFieldIndices(input.value).findIndex(
+      ([start, end]) => start <= selectionStart && selectionEnd <= end,
+    );
   };
 
   selectedFieldIndex.value = await getSelectedIndex();
 }
 
 function onFieldSelect(index: number) {
-  const input = document.getElementById("expressionInput") as HTMLInputElement;
+  const input = document.getElementById("expression-input") as HTMLInputElement;
 
   if (!input) return;
 
-  const partitions = partitionExpression(expression.value);
+  const partitionIndices = getFieldIndices(input.value);
+  if (index >= partitionIndices.length) return;
 
-  if (index >= partitions.length) return;
-
-  const offset =
-    partitions.reduce((acc, x, i) => (i < index ? acc + x.length : acc), 0) +
-    index;
-
-  const partition = partitions[index];
+  const [start, end] = partitionIndices[index];
   input.focus();
-  input.setSelectionRange(offset, offset + partition.length);
+  input.setSelectionRange(start, end);
 
   selectedFieldIndex.value = index;
 }
