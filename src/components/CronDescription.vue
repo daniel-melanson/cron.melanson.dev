@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { CronExpressionDescription, CronField, CronSyntax } from "../cron/types";
+import {
+  CronExpressionDescription,
+  CronField,
+  CronSyntax,
+} from "../cron/types";
 
 type Props = CronExpressionDescription & {
   selectedField?: CronField;

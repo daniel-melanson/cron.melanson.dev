@@ -1,10 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watchEffect } from "vue";
-import {
-  CRON_SYNTAX_LIST,
-  formatExpression,
-  getFieldIndices,
-} from "../cron";
+import { CRON_SYNTAX_LIST, formatExpression, getFieldIndices } from "../cron";
 import { CronSyntax, CronSyntaxKind } from "../cron/types";
 import {
   checkBookmarkMembership,
@@ -31,7 +27,7 @@ function onSyntaxChange(kind: CronSyntaxKind) {
 }
 
 function onExpressionChange(value: string) {
-  expression.value = formatExpression(value);
+  expression.value = value;
 }
 
 function toggleBookmark() {

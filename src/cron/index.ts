@@ -216,7 +216,7 @@ class CronSyntaxBuilder {
       defaultExpression: this.defaultExpression,
       expressionPattern: expressionPattern,
       describe: (expression) => {
-        const partitions = partitionExpression(expression);
+        const partitions = partitionExpression(formatExpression(expression));
 
         // Parse each partition into a field.
         const fieldParseResults = this.fields.map((field, i) => {

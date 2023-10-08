@@ -40,7 +40,10 @@ defineEmits(["selected:field"]);
       <th>,</th>
       <td>list separator</td>
     </tr>
-    <tr v-for="desc in syntax.fields[selectedFieldIndex]?.variantDescriptions ?? []">
+    <tr
+      v-for="desc in syntax.fields[selectedFieldIndex]?.variantDescriptions ??
+      []"
+    >
       <th>{{ desc.header }}</th>
       <td>{{ desc.value }}</td>
     </tr>
