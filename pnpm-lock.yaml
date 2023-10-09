@@ -20,6 +20,9 @@ dependencies:
   ts-pattern:
     specifier: ^5.0.5
     version: 5.0.5
+  ts-results:
+    specifier: ^3.3.0
+    version: 3.3.0
   vue:
     specifier: ^3.3.4
     version: 3.3.4
@@ -2764,6 +2767,10 @@ packages:
 
   /ts-pattern@5.0.5:
     resolution: {integrity: sha512-tL0w8U/pgaacOmkb9fRlYzWEUDCfVjjv9dD4wHTgZ61MjhuMt46VNWTG747NqW6vRzoWIKABVhFSOJ82FvXrfA==}
+    dev: false
+
+  /ts-results@3.3.0:
+    resolution: {integrity: sha512-FWqxGX2NHp5oCyaMd96o2y2uMQmSu8Dey6kvyuFdRJ2AzfmWo3kWa4UsPlCGlfQ/qu03m09ZZtppMoY8EMHuiA==}
     dev: false
 
   /type-detect@4.0.8:

@@ -1,12 +1,10 @@
+import { Result } from "ts-results";
+
 export enum CronSyntaxKind {
   UNIX = "UNIX",
   QUARTZ = "Quartz",
   AWS = "AWS",
 }
-
-export type Result<T, E> =
-  | { success: true; value: T }
-  | { success: false; error: E };
 
 export interface CronSyntax {
   kind: CronSyntaxKind;
@@ -19,7 +17,7 @@ export interface CronSyntax {
   ) => Result<CronExpressionDescription, InvalidCronExpressionError>;
 }
 
-export type CronFieldParseResult = Result<CronFieldMatch, Error>;
+export type CronFieldParseResult = Result<CronFieldMatch, string>;
 
 export enum CronFieldKind {
   SECOND = "SECOND",
@@ -45,7 +43,7 @@ export interface CronField {
 
 export type CronExpressionValidator = (
   match: CronExpressionMatch,
-) => Result<never, Error>;
+) => Result<undefined, string>;
 
 export type CronFieldMatch =
   | CronFieldStepMatch

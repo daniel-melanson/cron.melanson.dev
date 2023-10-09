@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, watchEffect } from "vue";
-import { CRON_SYNTAX_LIST, formatExpression, getFieldIndices } from "../cron";
+import { ref, computed } from "vue";
+import { CRON_SYNTAX_LIST, getFieldIndices } from "../cron";
 import { CronSyntax, CronSyntaxKind } from "../cron/types";
 import {
   checkBookmarkMembership,
@@ -98,19 +98,17 @@ function onFieldSelect(index: number) {
   <main>
     <CronDescription
       :text="
-        descriptionResult.success
-          ? descriptionResult.value.text
+        descriptionResult.ok
+          ? descriptionResult.val.text
           : { source: 'Unknown' }
       "
       :selectedField="selectedField"
-      :nextDates="
-        descriptionResult.success ? descriptionResult.value.nextDates : []
-      "
+      :nextDates="descriptionResult.ok ? descriptionResult.val.nextDates : []"
     />
     <CronForm
       :syntaxKinds="CRON_SYNTAX_LIST"
       :expression="expression"
-      :isValid="descriptionResult.success"
+      :isValid="descriptionResult.ok"
       :isBookmarked="isBookmarked"
       @update:expression="onExpressionChange"
       @update:syntax="onSyntaxChange"
@@ -122,9 +120,7 @@ function onFieldSelect(index: number) {
       :syntax="syntax"
       :selectedFieldIndex="selectedFieldIndex"
       :invalidIndices="
-        descriptionResult.success
-          ? []
-          : descriptionResult.error.invalidFieldIndices
+        descriptionResult.ok ? [] : descriptionResult.val.invalidFieldIndices
       "
       @selected:field="onFieldSelect"
     />

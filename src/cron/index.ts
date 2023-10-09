@@ -9,10 +9,10 @@ import {
   CronFieldMatch,
   CronFieldKind,
   CronExpressionMatch,
-  Result,
 } from "./types";
 import { cronValuePattern, oneOf } from "./pattern";
 import { describe } from "./describe";
+import { Err, Ok, Result } from "ts-results";
 
 export function formatExpression(expression: string): string {
   const paddingRight = expression.match(/\s*$/)?.[0] ?? "";
@@ -144,19 +144,15 @@ class CronFieldBuilder {
       parse: (field) => {
         const match = field.match(this.wholePattern);
 
-        if (!match)
-          return {
-            success: false,
-            error: new Error("Field does not match pattern."),
-          };
+        if (!match) return new Err("Field does not match pattern.");
 
         const groups = match.groups!;
-        if (!groups) return { success: false, error: new Error("No groups.") };
+        if (!groups) return new Err("No groups.");
 
         try {
-          return { success: true, value: this.parseMatch(groups) };
+          return new Ok(this.parseMatch(groups));
         } catch (err) {
-          return { success: false, error: err as Error };
+          return new Err(String(err));
         }
       },
     };
@@ -205,10 +201,7 @@ class CronSyntaxBuilder {
     );
 
     const getUnsuccessfulIndices = (results: Result<unknown, unknown>[]) =>
-      results.reduce(
-        (acc, x, i) => (x.success ? acc : [...acc, i]),
-        [] as number[],
-      );
+      results.reduce((acc, x, i) => (x.ok ? acc : [...acc, i]), [] as number[]);
 
     return {
       kind: this.kind,
@@ -221,8 +214,7 @@ class CronSyntaxBuilder {
         // Parse each partition into a field.
         const fieldParseResults = this.fields.map((field, i) => {
           const partition = partitions[i];
-          if (!partition)
-            return { success: false, error: new Error("Missing field value.") };
+          if (!partition) return new Err("Missing field value.");
 
           return field.parse(partition);
         }) satisfies CronFieldParseResult[];
@@ -234,20 +226,16 @@ class CronSyntaxBuilder {
           unparsedFieldIndices.length > 0 ||
           partitions.length !== this.fields.length
         )
-          return {
-            success: false,
-            error: new InvalidCronExpressionError(
-              partitions,
-              unparsedFieldIndices,
-            ),
-          };
+          return new Err(
+            new InvalidCronExpressionError(partitions, unparsedFieldIndices),
+          );
 
         // Build a match object from the parsed fields.
         const match = fieldParseResults.reduce((acc, x, i) => {
-          if (!x.success) throw x.error;
+          if (!x.ok) throw new Error(x.val);
 
           const field = this.fields[i];
-          return { ...acc, [field.kind]: x.value };
+          return { ...acc, [field.kind]: x.val };
         }, {} as CronExpressionMatch);
 
         // Validate the match object.
@@ -257,19 +245,12 @@ class CronSyntaxBuilder {
         );
 
         if (invalidFieldIndices.length > 0) {
-          return {
-            success: false,
-            error: new InvalidCronExpressionError(
-              partitions,
-              invalidFieldIndices,
-            ),
-          };
+          return new Err(
+            new InvalidCronExpressionError(partitions, invalidFieldIndices),
+          );
         }
 
-        return {
-          success: true,
-          value: describe(match),
-        };
+        return new Ok(describe(match));
       },
       fields: this.fields,
     };
