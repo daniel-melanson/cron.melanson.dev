@@ -6,6 +6,7 @@ import {
   CronFieldMatch,
   CronFieldTextRanges,
 } from "./types";
+import { CronSyntax } from "./CronSyntax";
 
 function formatTimeUnit(value: number): string {
   return value.toString().padStart(2, "0");
@@ -51,33 +52,36 @@ function formatDayOfMonth(value: number): string {
   return value.toString() + suffix;
 }
 
-class Description {
-  private text: string = "";
+function formatKind(kind: CronFieldKind): string {
+  return kind.toLowerCase().replace(/_/g, "-");
+}
+
+class ExpressionDescription {
+  private description: string = "";
   private ranges: CronFieldTextRanges = new Map();
 
   getText(): string {
-    return this.text.charAt(0).toUpperCase() + this.text.slice(1) + ".";
+    const text = this.description;
+    return text.charAt(0).toUpperCase() + text.slice(1) + ".";
   }
 
   getRanges(): CronFieldTextRanges {
     return this.ranges;
   }
 
-  append(s: string): this {
-    this.text += s;
+  text(s: string): this {
+    this.description += s;
 
     return this;
   }
 
-  appendField(s: string, kind: CronFieldKind): this {
+  field(s: string, kind: CronFieldKind): this {
     if (this.ranges.has(kind)) throw new Error("Field already added.");
 
-    const start = this.text.length;
+    const start = this.description.length;
     const end = start + s.length;
 
-    console.log(s, kind);
-
-    this.append(s);
+    this.text(s);
 
     this.ranges.set(kind, [start, end]);
 
@@ -85,31 +89,68 @@ class Description {
   }
 }
 
-export function describe(
+function describeField(field: CronFieldMatch, kind: CronFieldKind): string {
+  return match(field)
+    .with({ kind: "ANY" }, () => "every " + formatKind(kind))
+    .with({ kind: "VALUE" }, ({ value }) => {
+      return match(kind)
+        .with(CronFieldKind.DAY_OF_MONTH, () => formatDayOfMonth(value))
+        .with(CronFieldKind.DAY_OF_WEEK, () => formatDayOfWeek(value))
+        .with(CronFieldKind.MONTH, () => formatMonth(value))
+        .otherwise(() => formatTimeUnit(value));
+    })
+    .otherwise(() => field.source);
+}
+
+export function describeMatch(
+  synax: CronSyntax,
   expression: CronExpressionMatch,
 ): CronExpressionDescription {
-  const d = new Description();
-  const { SECOND, MINUTE, HOUR, DAY_OF_MONTH, MONTH, DAY_OF_WEEK, YEAR } =
-    expression;
+  const d = new ExpressionDescription();
 
-  // Describe time of day
-  // match([SECOND, MINUTE, HOUR]).with(
-  //   [P._, VALUE, VALUE],
-  //   ([SECOND, MINUTE, HOUR]) => {
-  //     d.append("at ")
-  //       .appendField(formatTimeUnit(HOUR.value), CronFieldKind.HOUR)
-  //       .append(":")
-  //       .appendField(formatTimeUnit(MINUTE.value), CronFieldKind.MINUTE);
-  //
-  //     if (SECOND && SECOND.kind === "VALUE") {
-  //       d.append(":")
-  //         .appendField(formatTimeUnit(SECOND.value), CronFieldKind.SECOND)
-  //         .append(" o'clock");
-  //     } else if (SECOND) {
-  //       describeField(d, SECOND, CronFieldKind.SECOND);
-  //     }
-  //   },
-  // );
+  const entries = Object.entries(expression) as [
+    CronFieldKind,
+    CronFieldMatch,
+  ][];
+
+  const timeEntries = entries.slice(0, 3);
+
+  const entriesToProcess: [CronFieldKind, CronFieldMatch | undefined][] = [];
+  const p = timeEntries.map(([_, v]) => v);
+  console.log(p);
+  match(p)
+    .with(
+      [P._, { kind: "VALUE" }, { kind: "VALUE" }],
+      ([SECOND, MINUTE, HOUR]) => {
+        d.text("at ")
+          .field(formatTimeUnit(HOUR.value), CronFieldKind.HOUR)
+          .text(":")
+          .field(formatTimeUnit(MINUTE.value), CronFieldKind.MINUTE);
+
+        if (SECOND && SECOND.kind === "VALUE") {
+          d.text(":")
+            .field(formatTimeUnit(SECOND.value), CronFieldKind.SECOND)
+            .text(" o'clock");
+        } else if (SECOND) {
+          entriesToProcess.push([CronFieldKind.SECOND, SECOND]);
+        }
+      },
+    )
+    .otherwise(() => {
+      entriesToProcess.push(...timeEntries);
+    });
+
+  entriesToProcess.push(...entries.slice(3));
+  for (const [kind, field] of entriesToProcess) {
+    if (field) {
+      d.text(" ");
+
+      d.field(
+        describeField(field, kind as CronFieldKind),
+        kind as CronFieldKind,
+      );
+    }
+  }
 
   return {
     text: {

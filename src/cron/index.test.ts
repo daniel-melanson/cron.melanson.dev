@@ -1,4 +1,4 @@
-import type { CronSyntax } from "./types";
+import type { CronSyntax } from "./CronSyntax";
 import { CRON_SYNTAX } from "./index";
 
 function expectText(cron: CronSyntax, expression: string, text: string) {
@@ -50,11 +50,7 @@ describe("UNIX", () => {
       "* * */3 * * *",
       "Every minute of every hour every 3rd day.",
     );
-    expectText(
-      cron,
-      "0 0 */13th * * *",
-      "At 00:00 every 13rd day.",
-    );
+    expectText(cron, "0 0 */13th * * *", "At 00:00 every 13rd day.");
   });
 });
 

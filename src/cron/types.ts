@@ -1,20 +1,10 @@
 import { Result } from "ts-results";
+import { CronField } from "./CronField";
 
 export enum CronSyntaxKind {
   UNIX = "UNIX",
   QUARTZ = "Quartz",
   AWS = "AWS",
-}
-
-export interface CronSyntax {
-  kind: CronSyntaxKind;
-  description: string;
-  defaultExpression: string;
-  expressionPattern: RegExp;
-  fields: CronField[];
-  describe: (
-    expression: string,
-  ) => Result<CronExpressionDescription, InvalidCronExpressionError>;
 }
 
 export type CronFieldParseResult = Result<CronFieldMatch, string>;
@@ -29,17 +19,7 @@ export enum CronFieldKind {
   YEAR = "YEAR",
 }
 
-export type CronExpressionMatch = Record<
-  Exclude<CronFieldKind, "SECOND" | "YEAR">,
-  CronFieldMatch
-> & { SECOND: CronFieldMatch | undefined; YEAR: CronFieldMatch | undefined };
-
-export interface CronField {
-  kind: CronFieldKind;
-  wholePattern: RegExp;
-  variantDescriptions: CronFieldVariantDescription[];
-  parse: (field: string) => CronFieldParseResult;
-}
+export type CronExpressionMatch = CronFieldMatch[];
 
 export type CronExpressionValidator = (
   match: CronExpressionMatch,
@@ -52,35 +32,35 @@ export type CronFieldMatch =
   | CronFieldRangeMatch
   | CronFieldListMatch;
 
-interface CronFieldAnyMatch {
-  kind: "ANY";
+interface CronFieldMatchBase {
+  field: CronField;
   source: string;
 }
 
-interface CronFieldStepMatch {
+interface CronFieldAnyMatch extends CronFieldMatchBase {
+  kind: "ANY";
+}
+
+interface CronFieldStepMatch extends CronFieldMatchBase {
   kind: "STEP";
-  source: string;
   on: CronFieldMatch;
   step: number;
 }
 
-interface CronFieldValueMatch {
+interface CronFieldValueMatch extends CronFieldMatchBase {
   kind: "VALUE";
-  source: string;
   value: number;
 }
 
-interface CronFieldRangeMatch {
+interface CronFieldRangeMatch extends CronFieldMatchBase {
   kind: "RANGE";
-  source: string;
   from: number;
   to: number;
   separator: "-" | "~";
 }
 
-interface CronFieldListMatch {
+interface CronFieldListMatch extends CronFieldMatchBase {
   kind: "LIST";
-  source: string;
   items: CronFieldMatch[];
 }
 
@@ -99,12 +79,3 @@ export interface CronExpressionDescription {
   nextDates: string[];
 }
 
-export class InvalidCronExpressionError extends Error {
-  public readonly partitions: string[];
-  public readonly invalidFieldIndices: number[];
-  constructor(partitions: string[], invalidFieldIndices: number[]) {
-    super("Invalid cron expression.");
-    this.partitions = partitions;
-    this.invalidFieldIndices = invalidFieldIndices;
-  }
-}

@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { CRON_SYNTAX_LIST, getFieldIndices } from "../cron";
-import { CronSyntax, CronSyntaxKind } from "../cron/types";
+import { CRON_SYNTAX_LIST } from "../cron";
+import { CronSyntaxKind } from "../cron/types";
+import { type CronSyntax } from "../cron/CronSyntax"
 import {
   checkBookmarkMembership,
   addBookmark,
@@ -10,6 +11,7 @@ import {
 import CronForm from "./CronForm.vue";
 import CronDescription from "./CronDescription.vue";
 import CronFields from "./CronFields.vue";
+import { getFieldIndices } from "../cron/expression";
 
 const syntax = ref<CronSyntax>(CRON_SYNTAX_LIST[0]);
 const expression = ref(syntax.value.defaultExpression);
