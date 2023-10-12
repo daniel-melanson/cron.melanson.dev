@@ -40,7 +40,8 @@ export class CronField {
   }
 
   private parseFieldValue(groups: Record<string, string>): CronFieldMatch {
-    if (groups.wildcard) return { field: this, kind: "ANY", source: groups.wildcard };
+    if (groups.wildcard)
+      return { field: this, kind: "ANY", source: groups.wildcard };
     else if (groups.value) {
       return {
         field: this,

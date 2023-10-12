@@ -41,9 +41,11 @@ function formatDayOfWeek(value: number): string {
     .run();
 }
 
-function formatDayOfMonth(value: number): string {
-  const digit = value % 10;
+function formatInteger(value: number): string {
+  const lastTwo = value % 100;
+  if (10 <= lastTwo && lastTwo <= 20) return value.toString() + "th";
 
+  const digit = value % 10;
   const suffix = match(digit)
     .with(2, () => "nd")
     .with(3, () => "rd")
@@ -56,7 +58,7 @@ function format(kind: CronFieldKind, value?: number) {
   if (value === undefined) return kind.toLowerCase().replace(/_/g, "-");
 
   return match(kind)
-    .with(CronFieldKind.DAY_OF_MONTH, () => formatDayOfMonth(value))
+    .with(CronFieldKind.DAY_OF_MONTH, () => formatInteger(value))
     .with(CronFieldKind.DAY_OF_WEEK, () => formatDayOfWeek(value))
     .with(CronFieldKind.MONTH, () => formatMonth(value))
     .otherwise(() => formatTimeUnit(value));
@@ -93,12 +95,40 @@ class ExpressionDescription {
 
     return this;
   }
+
+  spacing(s: string): this {
+    if (this.description.length === 0) return this;
+
+    this.description += s;
+    return this;
+  }
 }
 
 function describeField(field: CronFieldMatch, kind: CronFieldKind): string {
   return match(field)
     .with({ kind: "ANY" }, () => "every " + format(kind))
     .with({ kind: "VALUE" }, ({ value }) => format(kind, value))
+    .with({ kind: "LIST" }, ({ items }) => {
+      const list = items.map((item) => describeField(item, kind));
+      const last = list.pop();
+
+      return `${list.join(", ")} or ${last}`;
+    })
+    .with({ kind: "RANGE" }, ({ from, to, separator }) => {
+      const word = separator === "-" ? "every" : "a random";
+
+      return `${word} ${format(kind)} from ${format(
+        kind,
+        from,
+      )} through ${format(kind, to)}`;
+    })
+    .with({ kind: "STEP" }, ({ on, step }) => {
+      const word = step === 1 ? "every" : `every ${formatInteger(step)}`;
+
+      if (on.kind === "ANY") return word + " " + format(kind);
+
+      return word + " " + describeField(on, kind);
+    })
     .otherwise(() => field.source);
 }
 
@@ -108,51 +138,42 @@ export function describeMatch(
 ): CronExpressionDescription {
   const d = new ExpressionDescription();
 
-  const entries = Object.entries(expression) as [
-    CronFieldKind,
-    CronFieldMatch,
-  ][];
+  const fields = synax.fields;
 
-  const entriesToProcess: [CronFieldKind, CronFieldMatch][] = [];
+  const timeMatches = [] as (CronFieldMatch | undefined)[];
+  const entriesToProcess = [] as CronFieldMatch[];
 
-  const timeEntries = entries.slice(0, 3);
-  if (timeEntries[0][0] !== CronFieldKind.SECOND) {
-    entriesToProcess.push(timeEntries.pop()!);
-    timeEntries.unshift(undefined);
+  const hasSeconds = fields[0].kind === CronFieldKind.SECOND;
+  const timeBound = hasSeconds ? 3 : 2;
+  for (let i = 0; i < fields.length; i++) {
+    const match = expression[fields[i].kind];
+    const array = i < timeBound ? timeMatches : entriesToProcess;
+
+    array.push(match);
   }
 
-  match(p)
-    .with(
-      [P._, { kind: "VALUE" }, { kind: "VALUE" }],
-      ([SECOND, MINUTE, HOUR]) => {
-        d.text("at ")
-          .field(formatTimeUnit(HOUR.value), CronFieldKind.HOUR)
-          .text(":")
-          .field(formatTimeUnit(MINUTE.value), CronFieldKind.MINUTE);
+  if (timeMatches.length < 3) timeMatches.unshift(undefined);
+  match(timeMatches).with(
+    [P._, { kind: "VALUE" }, { kind: "VALUE" }],
+    ([SECOND, MINUTE, HOUR]) => {
+      d.text("at ")
+        .field(formatTimeUnit(HOUR.value), CronFieldKind.HOUR)
+        .text(":")
+        .field(formatTimeUnit(MINUTE.value), CronFieldKind.MINUTE);
 
-        if (SECOND && SECOND.kind === "VALUE") {
-          d.text(":")
-            .field(formatTimeUnit(SECOND.value), CronFieldKind.SECOND)
-            .text(" o'clock");
-        } else if (SECOND) {
-          entriesToProcess.push([CronFieldKind.SECOND, SECOND]);
-        }
-      },
-    )
-    .otherwise(() => {
-      entriesToProcess.push(...timeEntries);
-    });
+      if (SECOND && SECOND.kind === "VALUE") {
+        d.text(":").field(formatTimeUnit(SECOND.value), CronFieldKind.SECOND);
+      } else if (SECOND) {
+        entriesToProcess.unshift(SECOND);
+      }
+    },
+  );
 
-  entriesToProcess.push(...entries.slice(3));
-  for (const [kind, field] of entriesToProcess) {
-    if (field) {
-      d.text(" ");
+  for (const match of entriesToProcess) {
+    const kind = match.field.kind;
 
-      d.field(
-        describeField(field, kind as CronFieldKind),
-        kind as CronFieldKind,
-      );
-    }
+    d.spacing(", ");
+    d.field(describeField(match, kind), kind);
   }
 
   return {

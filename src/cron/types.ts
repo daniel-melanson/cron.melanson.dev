@@ -19,7 +19,7 @@ export enum CronFieldKind {
   YEAR = "YEAR",
 }
 
-export type CronExpressionMatch = CronFieldMatch[];
+export type CronExpressionMatch = Record<CronFieldKind, CronFieldMatch>;
 
 export type CronExpressionValidator = (
   match: CronExpressionMatch,
@@ -78,4 +78,3 @@ export interface CronExpressionDescription {
   };
   nextDates: string[];
 }
-
