@@ -2,7 +2,7 @@
 import { ref, computed } from "vue";
 import { CRON_SYNTAX_LIST } from "../cron";
 import { CronSyntaxKind } from "../cron/types";
-import { type CronSyntax } from "../cron/CronSyntax"
+import { type CronSyntax } from "../cron/CronSyntax";
 import {
   checkBookmarkMembership,
   addBookmark,
