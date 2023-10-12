@@ -52,8 +52,14 @@ function formatDayOfMonth(value: number): string {
   return value.toString() + suffix;
 }
 
-function formatKind(kind: CronFieldKind): string {
-  return kind.toLowerCase().replace(/_/g, "-");
+function format(kind: CronFieldKind, value?: number) {
+  if (value === undefined) return kind.toLowerCase().replace(/_/g, "-");
+
+  return match(kind)
+    .with(CronFieldKind.DAY_OF_MONTH, () => formatDayOfMonth(value))
+    .with(CronFieldKind.DAY_OF_WEEK, () => formatDayOfWeek(value))
+    .with(CronFieldKind.MONTH, () => formatMonth(value))
+    .otherwise(() => formatTimeUnit(value));
 }
 
 class ExpressionDescription {
@@ -91,14 +97,8 @@ class ExpressionDescription {
 
 function describeField(field: CronFieldMatch, kind: CronFieldKind): string {
   return match(field)
-    .with({ kind: "ANY" }, () => "every " + formatKind(kind))
-    .with({ kind: "VALUE" }, ({ value }) => {
-      return match(kind)
-        .with(CronFieldKind.DAY_OF_MONTH, () => formatDayOfMonth(value))
-        .with(CronFieldKind.DAY_OF_WEEK, () => formatDayOfWeek(value))
-        .with(CronFieldKind.MONTH, () => formatMonth(value))
-        .otherwise(() => formatTimeUnit(value));
-    })
+    .with({ kind: "ANY" }, () => "every " + format(kind))
+    .with({ kind: "VALUE" }, ({ value }) => format(kind, value))
     .otherwise(() => field.source);
 }
 
@@ -113,11 +113,14 @@ export function describeMatch(
     CronFieldMatch,
   ][];
 
-  const timeEntries = entries.slice(0, 3);
+  const entriesToProcess: [CronFieldKind, CronFieldMatch][] = [];
 
-  const entriesToProcess: [CronFieldKind, CronFieldMatch | undefined][] = [];
-  const p = timeEntries.map(([_, v]) => v);
-  console.log(p);
+  const timeEntries = entries.slice(0, 3);
+  if (timeEntries[0][0] !== CronFieldKind.SECOND) {
+    entriesToProcess.push(timeEntries.pop()!);
+    timeEntries.unshift(undefined);
+  }
+
   match(p)
     .with(
       [P._, { kind: "VALUE" }, { kind: "VALUE" }],

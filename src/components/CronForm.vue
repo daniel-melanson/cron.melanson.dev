@@ -29,7 +29,6 @@ async function copyExpression(expression: string) {
 onUpdated(() => {
   console.log("updated");
 });
-
 </script>
 
 <template>
@@ -47,7 +46,8 @@ onUpdated(() => {
         @keydown.passive="$emit('on:keydown')"
         @click="$emit('on:click')"
         @input.trim="
-          (event) => $emit('update:expression', event.target.value ?? '')
+          (event) =>
+            $emit('update:expression', event.target.value.toUpperCase() ?? '')
         "
       />
       <IconCheckbox
