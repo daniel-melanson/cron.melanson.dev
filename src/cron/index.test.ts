@@ -14,20 +14,36 @@ describe("UNIX", () => {
   const cron = CRON_SYNTAX.UNIX;
 
   it("All wildcards", () => {
-    expectText(cron, "* * * * *", "Every minute.");
+    expectText(
+      cron,
+      "* * * * *",
+      "Every minute, of every hour, of every day-of-month, of every month, on any day-of-week.",
+    );
   });
 
   it("Specific times", () => {
-    expectText(cron, "35 15 * * *", "At 15:35.");
-    expectText(cron, "0 15 * * *", "At 15:00.");
-    expectText(cron, "0 1 * * *", "At 1:00.");
+    expectText(
+      cron,
+      "35 15 * * *",
+      "At 15:35, of every day-of-month, of every month, on any day-of-week.",
+    );
+    expectText(
+      cron,
+      "0 15 * * *",
+      "At 15:00, of every day-of-month, of every month, on any day-of-week.",
+    );
+    expectText(
+      cron,
+      "0 1 * * *",
+      "At 1:00, of every day-of-month, of every month, on any day-of-week.",
+    );
   });
 
   it("Any time on specific days.", () => {
     expectText(
       cron,
       "* * 15 10 *",
-      "Every minute of every hour on the 15th of October.",
+      "Every minute, of every hour, on the 15th of October.",
     );
     expectText(
       cron,

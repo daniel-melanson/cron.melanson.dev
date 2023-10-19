@@ -104,12 +104,23 @@ class ExpressionDescription {
   }
 }
 
-function describeField(field: CronFieldMatch, kind: CronFieldKind): string {
+function describeField(
+  field: CronFieldMatch,
+  kind: CronFieldKind,
+  isFirst = false,
+  isRoot = false,
+): string {
   return match(field)
-    .with({ kind: "ANY" }, () => "every " + format(kind))
+    .with({ kind: "ANY" }, () =>
+      match(kind)
+        .with(CronFieldKind.DAY_OF_WEEK, () => "on any day-of-week")
+        .otherwise(
+          () => (isRoot && !isFirst ? "of every " : "every ") + format(kind),
+        ),
+    )
     .with({ kind: "VALUE" }, ({ value }) => format(kind, value))
     .with({ kind: "LIST" }, ({ items }) => {
-      const list = items.map((item) => describeField(item, kind));
+      const list = items.map((item) => describeField(item, kind, false));
       const last = list.pop();
 
       return `${list.join(", ")} or ${last}`;
@@ -127,7 +138,7 @@ function describeField(field: CronFieldMatch, kind: CronFieldKind): string {
 
       if (on.kind === "ANY") return word + " " + format(kind);
 
-      return word + " " + describeField(on, kind);
+      return word + " " + describeField(on, kind, false);
     })
     .otherwise(() => field.source);
 }
@@ -153,27 +164,38 @@ export function describeMatch(
   }
 
   if (timeMatches.length < 3) timeMatches.unshift(undefined);
-  match(timeMatches).with(
-    [P._, { kind: "VALUE" }, { kind: "VALUE" }],
-    ([SECOND, MINUTE, HOUR]) => {
-      d.text("at ")
-        .field(formatTimeUnit(HOUR.value), CronFieldKind.HOUR)
-        .text(":")
-        .field(formatTimeUnit(MINUTE.value), CronFieldKind.MINUTE);
+  match(timeMatches)
+    .with(
+      [P._, { kind: "VALUE" }, { kind: "VALUE" }],
+      ([SECOND, MINUTE, HOUR]) => {
+        d.text("at ")
+          .field(formatTimeUnit(HOUR.value), CronFieldKind.HOUR)
+          .text(":")
+          .field(formatTimeUnit(MINUTE.value), CronFieldKind.MINUTE);
 
-      if (SECOND && SECOND.kind === "VALUE") {
-        d.text(":").field(formatTimeUnit(SECOND.value), CronFieldKind.SECOND);
-      } else if (SECOND) {
-        entriesToProcess.unshift(SECOND);
-      }
-    },
-  );
+        if (SECOND && SECOND.kind === "VALUE") {
+          d.text(":").field(formatTimeUnit(SECOND.value), CronFieldKind.SECOND);
+        } else if (SECOND) {
+          entriesToProcess.unshift(SECOND);
+        }
+      },
+    )
+    .otherwise(() => {
+      const timeEntries = timeMatches.filter(
+        (m) => m !== undefined,
+      ) as CronFieldMatch[];
 
-  for (const match of entriesToProcess) {
+      entriesToProcess.unshift(...timeEntries);
+    });
+
+  for (let i = 0; i < entriesToProcess.length; i++) {
+    const match = entriesToProcess[i];
     const kind = match.field.kind;
 
+    const isFirst = i === 0;
+
     d.spacing(", ");
-    d.field(describeField(match, kind), kind);
+    d.field(describeField(match, kind, isFirst, true), kind);
   }
 
   return {
