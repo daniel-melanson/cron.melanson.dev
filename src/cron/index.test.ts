@@ -1,11 +1,13 @@
 import type { CronSyntax } from "./CronSyntax";
 import { CRON_SYNTAX } from "./index";
+import { CronExpressionDescription } from "./types";
 
 function expectText(cron: CronSyntax, expression: string, text: string) {
-  const description = cron.describe(expression);
-  expect(description.ok).toBe(true);
-  // @ts-ignore
-  expect(description.value.text).toBe(text);
+  const result = cron.describe(expression);
+  expect(result.ok).toBe(true);
+
+  const descripton = result.val as CronExpressionDescription;
+  expect(descripton.text.source).toBe(text);
 }
 
 describe("UNIX", () => {
@@ -37,17 +39,17 @@ describe("UNIX", () => {
   it("nth days", () => {
     expectText(
       cron,
-      "* * */2 * * *",
+      "* */2 * * *",
       "Every minute of every hour every 2nd day.",
     );
     expectText(
       cron,
-      "* * */10 * * *",
+      "* */10 * * *",
       "Every minute of every hour every 10th day.",
     );
     expectText(
       cron,
-      "* * */3 * * *",
+      "* */3 * * *",
       "Every minute of every hour every 3rd day.",
     );
     expectText(cron, "0 0 */13th * * *", "At 00:00 every 13rd day.");
@@ -55,9 +57,9 @@ describe("UNIX", () => {
 });
 
 describe("AWS", () => {
-  const cron = CRON_SYNTAX.AWS;
+  // const cron = CRON_SYNTAX.AWS;
 });
 
 describe("Quartz", () => {
-  const cron = CRON_SYNTAX.Quartz;
+  // const cron = CRON_SYNTAX.Quartz;
 });

@@ -49,7 +49,7 @@ export class CronSyntax {
 
     // Build a match object from the parsed fields.
     const match = fieldParseResults.reduce((acc, x, i) => {
-      if (!x.ok) throw new Error(x.val);
+      if (x.err) throw new Error(x.val);
 
       const field = this.fields[i];
       return { ...acc, [field.kind]: x.val };
