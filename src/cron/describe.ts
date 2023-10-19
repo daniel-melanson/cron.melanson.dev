@@ -8,8 +8,10 @@ import {
 } from "./types";
 import { CronSyntax } from "./CronSyntax";
 
-function formatTimeUnit(value: number): string {
-  return value.toString().padStart(2, "0");
+function formatTimeUnit(value: number, leadingZeros = true): string {
+  const s = value.toString();
+
+  return leadingZeros ? s.padStart(2, "0") : s;
 }
 
 function formatMonth(value: number): string {
@@ -169,7 +171,7 @@ export function describeMatch(
       [P._, { kind: "VALUE" }, { kind: "VALUE" }],
       ([SECOND, MINUTE, HOUR]) => {
         d.text("at ")
-          .field(formatTimeUnit(HOUR.value), CronFieldKind.HOUR)
+          .field(formatTimeUnit(HOUR.value, false), CronFieldKind.HOUR)
           .text(":")
           .field(formatTimeUnit(MINUTE.value), CronFieldKind.MINUTE);
 

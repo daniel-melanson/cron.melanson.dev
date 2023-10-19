@@ -25,17 +25,17 @@ describe("UNIX", () => {
     expectText(
       cron,
       "35 15 * * *",
-      "At 15:35, of every day-of-month, of every month, on any day-of-week.",
+      "At 15:35, every day-of-month, of every month, on any day-of-week.",
     );
     expectText(
       cron,
       "0 15 * * *",
-      "At 15:00, of every day-of-month, of every month, on any day-of-week.",
+      "At 15:00, every day-of-month, of every month, on any day-of-week.",
     );
     expectText(
       cron,
       "0 1 * * *",
-      "At 1:00, of every day-of-month, of every month, on any day-of-week.",
+      "At 1:00, every day-of-month, of every month, on any day-of-week.",
     );
   });
 
@@ -43,12 +43,12 @@ describe("UNIX", () => {
     expectText(
       cron,
       "* * 15 10 *",
-      "Every minute, of every hour, on the 15th of October.",
+      "Every minute, of every hour, on the 15th of October, on any day-of-week.",
     );
     expectText(
       cron,
       "* * 23 NOV *",
-      "Every minute of every hour on the 23rd of November.",
+      "Every minute of every hour on the 23rd of November, on any day-of-week.",
     );
   });
 
