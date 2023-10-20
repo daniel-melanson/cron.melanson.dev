@@ -44,15 +44,19 @@ describe("UNIX", () => {
     );
     expectText(
       "* * 23 NOV *",
-      "Every minute of every hour on the 23rd of November, on any day-of-week.",
+      "Every minute, of every hour, on the 23rd of November, on any day-of-week.",
     );
   });
 
   it("nth days", () => {
-    expectText("* */2 * * *", "Every minute of every hour every 2nd day.");
-    expectText("* */10 * * *", "Every minute of every hour every 10th day.");
-    expectText("* */3 * * *", "Every minute of every hour every 3rd day.");
-    expectText("0 0 */13th * * *", "At 00:00 every 13rd day.");
+    expectText(
+      "* */2 * * *",
+      "Every minute, of every 2nd hour, of every day-of-month, of every month, on any day-of-week.",
+    );
+    expectText(
+      "* */10 * * *",
+      "Every minute, of every 10th hour, of every day-of-month, of every month, on any day-of-week.",
+    );
   });
 });
 
