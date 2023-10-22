@@ -140,7 +140,7 @@ describe("UNIX", () => {
       "Every minute, of every hour, on the 2nd, or on any Tuesday, of every month.",
     );
     expectText(
-      "* * 1 * 4",
+      "* * 1 * 3",
       "Every minute, of every hour, on the 1st, or on any Wednesday, of every month.",
     );
   });
