@@ -155,7 +155,7 @@ describe("UNIX", () => {
   it("day-of-month and day-of-week", () => {
     expectText(
       "* * */2 * 4",
-      "Every minute, of every hour, every 2nd day-of-month, that is a Tuesday, of every month.",
+      "Every minute, of every hour, of every 2nd day-of-month, that is a Thursday, of every month.",
     );
   });
 });

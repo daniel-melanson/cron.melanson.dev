@@ -51,7 +51,9 @@ function describeField(
       if (list.length === 1) return `${prefix} ${list[0]}`;
 
       const last = list.pop();
-      return `${prefix} ${list.join(", ")} or ${last}`;
+      return `${prefix} ${list.join(", ")}${
+        list.length > 2 ? ", " : " "
+      }or ${last}`;
     })
     .with([{ kind: "ANY" }, P.any], () =>
       m(fieldKind)
