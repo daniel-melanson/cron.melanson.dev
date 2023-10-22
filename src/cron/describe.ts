@@ -141,6 +141,10 @@ function describeField(
     .with({ kind: "VALUE" }, ({ value }) =>
       m([fieldKind, options])
         .with(
+          [CronFieldKind.MONTH, { isRoot: true }],
+          () => `in ${format(fieldKind, value)}`,
+        )
+        .with(
           [CronFieldKind.DAY_OF_MONTH, P.any],
           () => `on the ${format(fieldKind, value)}`,
         )
