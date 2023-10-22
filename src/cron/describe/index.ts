@@ -44,6 +44,18 @@ function describeField(
           () => `on the ${format(fieldKind, value)}`,
         )
         .with(
+          [
+            CronFieldKind.DAY_OF_WEEK,
+            P.any,
+            { [CronFieldKind.DAY_OF_MONTH]: { kind: "ANY" } },
+          ],
+          () => {
+            d.removeField(CronFieldKind.DAY_OF_MONTH);
+
+            return `on every ${format(fieldKind, value)}`;
+          },
+        )
+        .with(
           [CronFieldKind.DAY_OF_WEEK, P.any, P.any],
           () => `on ${format(fieldKind, value)}`,
         )
@@ -59,8 +71,7 @@ function describeField(
       );
 
       const last = list.pop();
-
-      return `${list.join(", ")} or ${last}`;
+      return `of ${format(fieldKind)} ${list.join(", ")} or ${last}`;
     })
     .with({ kind: "RANGE" }, ({ from, to, separator }) => {
       const prefix = separator === "-" ? "of every" : "a random";
@@ -71,7 +82,7 @@ function describeField(
       )} through ${format(fieldKind, to)}`;
     })
     .with({ kind: "STEP" }, ({ on, step }) => {
-      const word = step === 1 ? "every" : `every ${formatInteger(step)}`;
+      const word = step === 1 ? "every" : `of every ${formatInteger(step)}`;
 
       if (on.kind === "ANY") return word + " " + format(fieldKind);
 
