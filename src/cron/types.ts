@@ -1,5 +1,5 @@
 import { Result } from "ts-results";
-import { CronField } from "./CronField";
+import { CronField } from "./parse/CronField";
 
 export enum CronSyntaxKind {
   UNIX = "UNIX",

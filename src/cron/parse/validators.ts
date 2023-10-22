@@ -1,5 +1,5 @@
 import { match } from "ts-pattern";
-import { CronExpressionValidator, CronFieldMatch } from "./types";
+import { CronExpressionValidator, CronFieldMatch } from "../types";
 import { Err, Ok } from "ts-results";
 
 export const VALID_RANGES: CronExpressionValidator = (expression) => {

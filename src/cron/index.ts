@@ -1,7 +1,7 @@
 import { CronSyntaxKind, CronFieldKind } from "./types";
-import { oneOf } from "./pattern";
-import { CronFieldBuilder } from "./CronField";
-import { CronSyntaxBuilder } from "./CronSyntax";
+import { oneOf } from "./parse/pattern";
+import { CronFieldBuilder } from "./parse/CronField";
+import { CronSyntaxBuilder } from "./parse/CronSyntax";
 
 const MONTH_VARIANT_VALUE_MAP = {
   JAN: 1,

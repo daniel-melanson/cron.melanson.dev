@@ -1,4 +1,4 @@
-import { CronSyntax } from "./CronSyntax";
+import { CronSyntax } from "./parse/CronSyntax";
 import { CRON_SYNTAX } from "./index";
 import { CronExpressionDescription } from "./types";
 

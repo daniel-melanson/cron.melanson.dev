@@ -6,9 +6,9 @@ import {
   CronExpressionValidator,
   CronFieldParseResult,
   CronSyntaxKind,
-} from "./types";
-import { formatExpression, partitionExpression } from "./expression";
-import { describeMatch } from "./describe";
+} from "../types";
+import { formatExpression, partitionExpression } from "../util";
+import { describeMatch } from "../describe";
 
 const getUnsuccessfulIndices = (results: Result<unknown, unknown>[]) =>
   results.reduce((acc, x, i) => (x.ok ? acc : [...acc, i]), [] as number[]);

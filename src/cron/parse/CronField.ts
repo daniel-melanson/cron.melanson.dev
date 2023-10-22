@@ -4,7 +4,7 @@ import {
   CronFieldKind,
   CronFieldMatch,
   CronFieldVariantDescription,
-} from "./types";
+} from "../types";
 
 export class CronField {
   constructor(
