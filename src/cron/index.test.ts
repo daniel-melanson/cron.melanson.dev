@@ -116,7 +116,7 @@ describe("UNIX", () => {
 
     expectText(
       "* * 1,2,4 * *",
-      "Every minute, of every hour, on the 1st, 2nd or 4th, on any day-of-week, of every month.",
+      "Every minute, of every hour, on the 1st, 2nd, or 4th, on any day-of-week, of every month.",
     );
   });
 
@@ -127,10 +127,17 @@ describe("UNIX", () => {
     );
   });
 
-  it("mixed lists", () => {
+  it("lists with values and ranges", () => {
     expectText(
       "* 1,2-5,8 * * *",
-      "Every minute, of hour 1, 2, or 8 or of every hour 2 through 5, of every day-of-month, on any day-of-week, of every month.",
+      "Every minute, of hour 1, 2 through 5, or 8, of every day-of-month, on any day-of-week, of every month.",
+    );
+  });
+
+  it("lists with steps", () => {
+    expectText(
+      "* 1,*/2 * * *",
+      "Every minute, of hour 1 or every second hour, of every day-of-month, on any day-of-week, of every month.",
     );
   });
 
@@ -150,9 +157,6 @@ describe("UNIX", () => {
       "* * 1 * 4",
       "Every minute, of every hour, on the 1st, or on any Wednesday, of every month.",
     );
-  });
-
-  it("day-of-month and day-of-week", () => {
     expectText(
       "* * */2 * 4",
       "Every minute, of every hour, of every 2nd day-of-month, that is a Thursday, of every month.",

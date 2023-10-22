@@ -52,7 +52,7 @@ function describeField(
 
       const last = list.pop();
       return `${prefix} ${list.join(", ")}${
-        list.length > 2 ? ", " : " "
+        list.length === 1 ? " " : ", "
       }or ${last}`;
     })
     .with([{ kind: "ANY" }, P.any], () =>
