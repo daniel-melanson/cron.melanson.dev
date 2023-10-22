@@ -1,4 +1,4 @@
-import type { CronSyntax } from "./CronSyntax";
+import { CronSyntax } from "./CronSyntax";
 import { CRON_SYNTAX } from "./index";
 import { CronExpressionDescription } from "./types";
 
@@ -10,52 +10,152 @@ function expectTextCron(cron: CronSyntax, expression: string, text: string) {
   expect(descripton.text.source).toBe(text);
 }
 
-describe("UNIX", () => {
-  const cron = CRON_SYNTAX.UNIX;
-  const expectText = (expression: string, text: string) =>
+const makeExpectText =
+  (cron: CronSyntax) => (expression: string, text: string) =>
     expectTextCron(cron, expression, text);
 
-  it("All wildcards", () => {
+describe("UNIX", () => {
+  const expectText = makeExpectText(CRON_SYNTAX.UNIX);
+
+  it("all wildcards", () => {
     expectText(
       "* * * * *",
-      "Every minute, of every hour, of every day-of-month, of every month, on any day-of-week.",
+      "Every minute, of every hour, of every day-of-month, on any day-of-week, of every month.",
     );
   });
 
-  it("Specific times", () => {
+  it("specific times", () => {
     expectText(
       "35 15 * * *",
-      "At 15:35, every day-of-month, of every month, on any day-of-week.",
+      "At 15:35, every day-of-month, on any day-of-week, of every month.",
     );
+
     expectText(
       "0 15 * * *",
-      "At 15:00, every day-of-month, of every month, on any day-of-week.",
+      "At 15:00, every day-of-month, on any day-of-week, of every month.",
     );
+
     expectText(
       "0 1 * * *",
-      "At 1:00, every day-of-month, of every month, on any day-of-week.",
+      "At 1:00, every day-of-month, on any day-of-week, of every month.",
     );
   });
 
-  it("Any time on specific days.", () => {
+  it("specific days", () => {
+    expectText(
+      "* * 15 * *",
+      "Every minute, of every hour, on the 15th of every month, on any day-of-week.",
+    );
+
+    expectText(
+      "* * 1 * *",
+      "Every minute, of every hour, on the 1st of every month, on any day-of-week.",
+    );
+  });
+
+  it("specific months", () => {
+    expectText(
+      "* * * NOV *",
+      "Every minute, of every hour, of every day-of-month, on any day-of-week, in November.",
+    );
+
+    expectText(
+      "* * * 11 *",
+      "Every minute, of every hour, of every day-of-month, on any day-of-week, in November.",
+    );
+  });
+
+  it("specific days of week", () => {
+    expectText(
+      "* * * * FRI",
+      "Every minute, of every hour, on every Friday, of every month.",
+    );
+
+    expectText(
+      "* * * * 0",
+      "Every minute, of every hour, on every Sunday, of every month.",
+    );
+  });
+
+  it("any time on specific days.", () => {
     expectText(
       "* * 15 10 *",
-      "Every minute, of every hour, on the 15th of October, on any day-of-week.",
+      "Every minute, of every hour, on the 15th, on any day-of-week, in October.",
     );
+
     expectText(
       "* * 23 NOV *",
-      "Every minute, of every hour, on the 23rd of November, on any day-of-week.",
+      "Every minute, of every hour, on the 23rd, on any day-of-week, in November.",
     );
   });
 
   it("nth days", () => {
     expectText(
       "* */2 * * *",
-      "Every minute, of every 2nd hour, of every day-of-month, of every month, on any day-of-week.",
+      "Every minute, of every 2nd hour, of every day-of-month, on any day-of-week, of every month.",
     );
+
     expectText(
       "* */10 * * *",
-      "Every minute, of every 10th hour, of every day-of-month, of every month, on any day-of-week.",
+      "Every minute, of every 10th hour, of every day-of-month, on any day-of-week, of every month.",
+    );
+  });
+
+  it("ranges", () => {
+    expectText(
+      "* 1-5 * * *",
+      "Every minute, of every hour 1 through 5, of every day-of-month, on any day-of-week, of every month.",
+    );
+  });
+
+  it("lists", () => {
+    expectText(
+      "* 1,5 * * *",
+      "Every minute, of hour 1 or hour 5, of every day-of-month, on any day-of-week, of every month.",
+    );
+
+    expectText(
+      "* * 1,2,4 * *",
+      "Every minute, of every hour, of every day-of-month, on any day-of-week, of every month.",
+    );
+  });
+
+  it("lists with ranges", () => {
+    expectText(
+      "* 1-5,10-15 * * *",
+      "Every minute, of every hour 1 through 5 or of every hour 10 through 15, on any day-of-week, of every day-of-month, of every month.",
+    );
+  });
+
+  it("mixed lists", () => {
+    expectText(
+      "* 1,2-5,8 * * *",
+      "Every minute, of hour 1, 2, or 8 or of every hour 2 through 5, on any day-of-week, of every day-of-month, of every month.",
+    );
+  });
+
+  it("day-of-month and day-of-week", () => {
+    expectText(
+      "* * 2 * TUES",
+      "Every minute, of every hour, on the 2nd, or on any Tuesday, of every month.",
+    );
+    expectText(
+      "* * 1 * 4",
+      "Every minute, of every hour, on the 1st, or on any Wednesday, of every month.",
+    );
+  });
+
+  it("day-of-month and day-of-week", () => {
+    expectText(
+      "* * 1 * 4",
+      "Every minute, of every hour, on the 1st, or on any Wednesday, of every month.",
+    );
+  });
+
+  it("day-of-month and day-of-week", () => {
+    expectText(
+      "* * */2 * 4",
+      "Every minute, of every hour, every 2nd day-of-month, that is a Tuesday, of every month.",
     );
   });
 });

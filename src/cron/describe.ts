@@ -49,6 +49,7 @@ function formatInteger(value: number): string {
 
   const digit = value % 10;
   const suffix = m(digit)
+    .with(1, () => "st")
     .with(2, () => "nd")
     .with(3, () => "rd")
     .otherwise(() => "th");
@@ -63,7 +64,7 @@ function format(kind: CronFieldKind, value?: number) {
     .with(CronFieldKind.DAY_OF_MONTH, () => formatInteger(value))
     .with(CronFieldKind.DAY_OF_WEEK, () => formatDayOfWeek(value))
     .with(CronFieldKind.MONTH, () => formatMonth(value))
-    .otherwise(() => formatTimeUnit(value));
+    .otherwise(() => formatTimeUnit(value, false));
 }
 
 class ExpressionDescription {
@@ -114,10 +115,16 @@ class ExpressionDescription {
   }
 }
 
+interface Options {
+  isFirst?: boolean;
+  isRoot?: boolean;
+  isListItem?: boolean;
+}
+
 function describeField(
   d: ExpressionDescription,
   match: CronFieldMatch,
-  options = { isFirst: false, isRoot: false },
+  options: Options = {},
 ): string {
   const fieldKind = match.field.kind;
 
@@ -132,24 +139,34 @@ function describeField(
         ),
     )
     .with({ kind: "VALUE" }, ({ value }) =>
-      m(fieldKind)
+      m([fieldKind, options])
         .with(
-          CronFieldKind.DAY_OF_MONTH,
+          [CronFieldKind.DAY_OF_MONTH, P.any],
           () => `on the ${format(fieldKind, value)}`,
         )
-        .with(CronFieldKind.MONTH, () => `of ${format(fieldKind, value)}`)
+        .with(
+          [CronFieldKind.DAY_OF_WEEK, P.any],
+          () => `on ${format(fieldKind, value)}`,
+        )
+        .with(
+          [CronFieldKind.HOUR, { isRoot: true }],
+          () => `of hour ${format(fieldKind, value)}`,
+        )
         .otherwise(() => format(fieldKind, value)),
     )
     .with({ kind: "LIST" }, ({ items }) => {
-      const list = items.map((item) => describeField(d, item));
+      const list = items.map((item) =>
+        describeField(d, item, { isListItem: true }),
+      );
+
       const last = list.pop();
 
       return `${list.join(", ")} or ${last}`;
     })
     .with({ kind: "RANGE" }, ({ from, to, separator }) => {
-      const prefix = separator === "-" ? "every" : "a random";
+      const prefix = separator === "-" ? "of every" : "a random";
 
-      return `${prefix} ${format(fieldKind)} from ${format(
+      return `${prefix} ${format(fieldKind)} ${format(
         fieldKind,
         from,
       )} through ${format(fieldKind, to)}`;
