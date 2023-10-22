@@ -111,7 +111,7 @@ describe("UNIX", () => {
   it("lists", () => {
     expectText(
       "* 1,5 * * *",
-      "Every minute, of hour 1 or hour 5, of every day-of-month, on any day-of-week, of every month.",
+      "Every minute, of hour 1 or 5, of every day-of-month, on any day-of-week, of every month.",
     );
 
     expectText(
