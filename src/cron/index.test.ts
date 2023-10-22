@@ -123,14 +123,14 @@ describe("UNIX", () => {
   it("lists with ranges", () => {
     expectText(
       "* 1-5,10-15 * * *",
-      "Every minute, of every hour 1 through 5 or of every hour 10 through 15, on any day-of-week, of every day-of-month, of every month.",
+      "Every minute, of every hour 1 through 5 or of every hour 10 through 15, of every day-of-month, on any day-of-week, of every month.",
     );
   });
 
   it("mixed lists", () => {
     expectText(
       "* 1,2-5,8 * * *",
-      "Every minute, of hour 1, 2, or 8 or of every hour 2 through 5, on any day-of-week, of every day-of-month, of every month.",
+      "Every minute, of hour 1, 2, or 8 or of every hour 2 through 5, of every day-of-month, on any day-of-week, of every month.",
     );
   });
 
