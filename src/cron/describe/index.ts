@@ -42,7 +42,7 @@ function describeField(
             return "on every";
           },
         )
-        .with([CronFieldKind.DAY_OF_WEEK, P.any], () => "on")
+        .with([CronFieldKind.DAY_OF_WEEK, P.any], () => "or on any")
         .with([CronFieldKind.MONTH, P.any], () => "in")
         .with([CronFieldKind.DAY_OF_MONTH, P.any], () => "on the")
         .with([CronFieldKind.HOUR, P.any], () => "of hour")

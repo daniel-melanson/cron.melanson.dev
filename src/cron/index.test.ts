@@ -75,6 +75,11 @@ describe("UNIX", () => {
       "* * * * 0",
       "Every minute, of every hour, on every Sunday, of every month.",
     );
+
+    expectText(
+      "* * * * 7",
+      "Every minute, of every hour, on every Sunday, of every month.",
+    );
   });
 
   it("any time on specific days.", () => {
@@ -146,17 +151,17 @@ describe("UNIX", () => {
       "* * 2 * TUES",
       "Every minute, of every hour, on the 2nd, or on any Tuesday, of every month.",
     );
+
     expectText(
       "* * 1 * 3",
       "Every minute, of every hour, on the 1st, or on any Wednesday, of every month.",
     );
-  });
 
-  it("day-of-month and day-of-week", () => {
     expectText(
       "* * 1 * 4",
-      "Every minute, of every hour, on the 1st, or on any Wednesday, of every month.",
+      "Every minute, of every hour, on the 1st, or on any Thursday, of every month.",
     );
+
     expectText(
       "* * */2 * 4",
       "Every minute, of every hour, of every 2nd day-of-month, that is a Thursday, of every month.",
