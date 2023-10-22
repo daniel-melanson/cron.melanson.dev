@@ -78,13 +78,14 @@ function describeField(
       ([{ from, to }]) =>
         `${format(fieldKind, from)} through ${format(fieldKind, to)}`,
     )
-    .with([{ kind: "STEP" }, P.any], ([{ on, step }]) => {
-      const word = step === 1 ? "every" : `of every ${formatInteger(step)}`;
-
-      if (on.kind === "ANY") return word + " " + format(fieldKind);
-
-      return word + " " + describeField(d, on, expression);
-    })
+    .with(
+      [{ kind: "STEP", on: { kind: "ANY" } }, { isRoot: true }],
+      ([{ step }]) => `of every ${formatInteger(step)} ${format(fieldKind)}`,
+    )
+    .with(
+      [{ kind: "STEP" }, P.any],
+      ([{ step }]) => `every ${formatInteger(step)} ${format(fieldKind)}`,
+    )
     .otherwise(() => match.source);
 
   if (!options.isRoot) return text;

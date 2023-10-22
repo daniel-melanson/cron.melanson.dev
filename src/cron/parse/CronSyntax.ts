@@ -26,7 +26,7 @@ export class CronSyntax {
     expression: string,
   ): Result<
     CronExpressionDescription,
-    { invalidFieldIndices: number[]; partitions: string[] }
+    { invalidFieldIndices: number[]; partitions: string[]; reasons: string[] }
   > {
     const partitions = partitionExpression(formatExpression(expression));
 
@@ -39,13 +39,18 @@ export class CronSyntax {
     }) satisfies CronFieldParseResult[];
 
     // Fail if any field was not parsed successfully.
-    // TODO Do something with error values?
     const unparsedFieldIndices = getUnsuccessfulIndices(fieldParseResults);
     if (
       unparsedFieldIndices.length > 0 ||
       partitions.length !== this.fields.length
     )
-      return new Err({ partitions, invalidFieldIndices: unparsedFieldIndices });
+      return new Err({
+        partitions,
+        invalidFieldIndices: unparsedFieldIndices,
+        reasons: fieldParseResults
+          .filter((r) => !r.ok)
+          .map((r) => r.val as string),
+      });
 
     // Build a match object from the parsed fields.
     const match = fieldParseResults.reduce((acc, x, i) => {
@@ -56,13 +61,19 @@ export class CronSyntax {
     }, {} as CronExpressionMatch);
 
     // Validate the match object.
-    // TODO Do something with error values?
-    const invalidFieldIndices = getUnsuccessfulIndices(
-      this.validators.map((validator) => validator(match)),
+    const validationResults = this.validators.map((validator) =>
+      validator(match),
     );
+    const invalidFieldIndices = getUnsuccessfulIndices(validationResults);
 
     if (invalidFieldIndices.length > 0) {
-      return new Err({ partitions, invalidFieldIndices });
+      return new Err({
+        partitions,
+        invalidFieldIndices,
+        reasons: validationResults
+          .filter((r) => !r.ok)
+          .map((r) => r.val as string),
+      });
     }
 
     return new Ok(describeMatch(this, match));

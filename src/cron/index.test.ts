@@ -4,6 +4,10 @@ import { CronExpressionDescription } from "./types";
 
 function expectTextCron(cron: CronSyntax, expression: string, text: string) {
   const result = cron.describe(expression);
+  if (result.err) {
+    console.log(result.val);
+  }
+
   expect(result.ok).toBe(true);
 
   const descripton = result.val as CronExpressionDescription;
@@ -142,13 +146,13 @@ describe("UNIX", () => {
   it("lists with steps", () => {
     expectText(
       "* 1,*/2 * * *",
-      "Every minute, of hour 1 or every second hour, of every day-of-month, on any day-of-week, of every month.",
+      "Every minute, of hour 1 or every 2nd hour, of every day-of-month, on any day-of-week, of every month.",
     );
   });
 
   it("day-of-month and day-of-week", () => {
     expectText(
-      "* * 2 * TUES",
+      "* * 2 * TUE",
       "Every minute, of every hour, on the 2nd, or on any Tuesday, of every month.",
     );
 
