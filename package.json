@@ -8,22 +8,30 @@
     "build": "vue-tsc && vite build",
     "test": "jest",
     "preview": "vite preview",
-    "format": "prettier --write \"src/**/*.{vue,ts}\""
+    "format": "prettier --write \"src/**/*.{vue,ts}\"",
+    "lint": "eslint \"src/../**/*.{vue,ts}\" --fix"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.4.2",
     "@fortawesome/free-regular-svg-icons": "^6.4.2",
     "@fortawesome/free-solid-svg-icons": "^6.4.2",
     "@fortawesome/vue-fontawesome": "^3.0.3",
+    "ts-pattern": "^5.0.5",
+    "ts-results": "^3.3.0",
     "vue": "^3.3.4"
   },
   "devDependencies": {
     "@types/jest": "^29.5.5",
+    "@typescript-eslint/eslint-plugin": "^6.7.5",
+    "@typescript-eslint/parser": "^6.7.5",
     "@vitejs/plugin-vue": "^4.2.3",
     "autoprefixer": "^10.4.15",
+    "eslint": "^8.51.0",
+    "eslint-plugin-vue": "^9.17.0",
     "jest": "^29.7.0",
     "prettier": "^3.0.3",
     "ts-jest": "^29.1.1",
+    "tslib": "^2.6.2",
     "typescript": "^5.0.2",
     "vite": "^4.4.5",
     "vue-tsc": "^1.8.5"

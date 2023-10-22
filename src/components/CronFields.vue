@@ -1,31 +1,29 @@
 <script setup lang="ts">
-import { computed } from "vue";
-import { CronSyntax } from "../cron";
+import type { CronSyntax } from "../cron/types";
 
-const { syntax, selectedIndex } = defineProps<{
+defineProps<{
   syntax: CronSyntax;
-  selectedIndex: number;
+  selectedFieldIndex: number;
   invalidIndices: number[];
 }>();
-const emits = defineEmits(["selected:field"]);
-
+defineEmits(["selected:field"]);
 </script>
 
 <template>
-  <div class="fieldTitles">
+  <div class="field-titles">
     <a
       v-for="(field, i) in syntax.fields"
-      :key="field.name"
-      class="fieldTitle"
+      :key="field.kind"
+      class="field-title"
       @click="$emit('selected:field', i)"
       :class="{
         invalid: invalidIndices.includes(i),
-        selected: i === selectedIndex,
+        selected: i === selectedFieldIndex,
       }"
-      >{{ field.name }}</a
+      >{{ field.kind.replace(/_/g, "-").toLowerCase() }}</a
     >
   </div>
-  <table class="fieldVariants">
+  <table class="field-variants">
     <tr>
       <th>*</th>
       <td>any value</td>
@@ -36,13 +34,16 @@ const emits = defineEmits(["selected:field"]);
     </tr>
     <tr>
       <th>~</th>
-      <td>random value</td>
+      <td>range of values (pick random)</td>
     </tr>
     <tr>
       <th>,</th>
       <td>list separator</td>
     </tr>
-    <tr v-for="desc in syntax.fields[selectedIndex]?.descriptions ?? []">
+    <tr
+      v-for="desc in syntax.fields[selectedFieldIndex]?.variantDescriptions ??
+      []"
+    >
       <th>{{ desc.header }}</th>
       <td>{{ desc.value }}</td>
     </tr>
@@ -50,13 +51,13 @@ const emits = defineEmits(["selected:field"]);
 </template>
 
 <style scoped>
-.fieldTitles {
+.field-titles {
   display: flex;
   justify-content: center;
   margin: 1em 0;
 }
 
-.fieldTitle {
+.field-title {
   margin: 0 0.5em;
   padding: 0.15em 0.25em;
   cursor: pointer;
@@ -64,15 +65,15 @@ const emits = defineEmits(["selected:field"]);
   transition: background-color 0.15s ease;
 }
 
-.fieldTitle.invalid {
+.field-title.invalid {
   background-color: var(--color-red);
 }
 
-.fieldTitle.selected:not(.invalid) {
+.field-title.selected:not(.invalid) {
   background-color: var(--color-blue);
 }
 
-.fieldVariants {
+.field-variants {
   margin-left: auto;
   margin-right: auto;
   background-color: var(--color-dark-grey);
@@ -82,15 +83,15 @@ const emits = defineEmits(["selected:field"]);
   list-style: none;
 }
 
-.fieldVariants th {
+.field-variants th {
   text-align: right;
   padding-right: 1rem;
-  width: 10rem;
+  width: 17rem;
   font-weight: bold;
 }
 
-.fieldVariants td {
-  width: 10rem;
+.field-variants td {
+  width: 17rem;
   text-align: left;
   padding-left: 1rem;
 }

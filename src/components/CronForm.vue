@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { CronSyntax } from "../cron";
+import { onMounted, onUpdated } from "vue";
+import { formatExpression } from "../cron";
+import type { CronSyntax } from "../cron/types";
 import { createSnackbar } from "../snackbar";
 import IconButton from "./IconButton.vue";
 import IconCheckbox from "./IconCheckbox.vue";
@@ -23,24 +25,29 @@ async function copyExpression(expression: string) {
 
   createSnackbar("success", `Copied '${expression}' to clipboard.`);
 }
+
+onUpdated(() => {
+  console.log("updated");
+});
 </script>
 
 <template>
-  <form class="cronForm" :class="{ valid: isValid }">
+  <form class="cron-form" :class="{ valid: isValid }">
     <fieldset>
       <Select
-        :options="syntaxKinds.map((s) => s.type)"
+        :options="syntaxKinds.map((s) => s.kind)"
         @change="(event) => $emit('update:syntax', event.target.value)"
       />
       <input
-        id="expressionInput"
+        id="expression-input"
         type="text"
         required
         :value="expression"
         @keydown.passive="$emit('on:keydown')"
         @click="$emit('on:click')"
         @input.trim="
-          (event) => $emit('update:expression', event.target.value ?? '')
+          (event) =>
+            $emit('update:expression', event.target.value.toUpperCase() ?? '')
         "
       />
       <IconCheckbox
@@ -59,24 +66,24 @@ async function copyExpression(expression: string) {
 </template>
 
 <style scoped>
-#expressionInput::selection {
+#expression-input::selection {
   background-color: var(--color-blue);
 }
 
-.cronForm {
+.cron-form {
   display: flex;
   justify-content: center;
 }
 
-.cronForm:not(.valid) fieldset {
+.cron-form:not(.valid) fieldset {
   border-color: var(--color-red);
 }
 
-.cronForm.valid fieldset {
+.cron-form.valid fieldset {
   border-color: var(--color-green);
 }
 
-.cronForm fieldset {
+.cron-form fieldset {
   display: flex;
   align-items: center;
   border-color: currentColor;
@@ -88,7 +95,7 @@ async function copyExpression(expression: string) {
   margin: 0;
 }
 
-.cronForm input {
+.cron-form input {
   padding: 0;
   background: none;
   border: none;
@@ -98,7 +105,7 @@ async function copyExpression(expression: string) {
   text-transform: uppercase;
 }
 
-.cronForm input:focus {
+.cron-form input:focus {
   outline: none;
 }
 </style>

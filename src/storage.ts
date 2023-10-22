@@ -1,4 +1,4 @@
-import { CronSyntaxType } from "./cron";
+import { CronSyntaxKind } from "./cron/types";
 
 const KEY = "CRON_BOOKMARKS";
 const storage = JSON.parse(window.localStorage.getItem(KEY) || "{}");
@@ -11,7 +11,7 @@ function checkKeyMembership(key: string): boolean {
   return key in storage;
 }
 
-type StorageOperation<T> = (type: CronSyntaxType, expression: string) => T;
+type StorageOperation<T> = (type: CronSyntaxKind, expression: string) => T;
 
 function usingKey<T>(f: (key: string) => T): StorageOperation<T> {
   return (type, expression) => {

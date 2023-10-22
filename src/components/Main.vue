@@ -1,12 +1,8 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import {
-  SYNTAX_LIST,
-  CronSyntaxType,
-  CronSyntax,
-  formatExpression,
-  partitionExpression,
-} from "../cron";
+import { CRON_SYNTAX_LIST } from "../cron";
+import { CronSyntaxKind } from "../cron/types";
+import { type CronSyntax } from "../cron/CronSyntax";
 import {
   checkBookmarkMembership,
   addBookmark,
@@ -15,33 +11,34 @@ import {
 import CronForm from "./CronForm.vue";
 import CronDescription from "./CronDescription.vue";
 import CronFields from "./CronFields.vue";
+import { getFieldIndices } from "../cron/expression";
 
-const syntax = ref<CronSyntax>(SYNTAX_LIST[0]);
-const expression = ref(syntax.value.default);
+const syntax = ref<CronSyntax>(CRON_SYNTAX_LIST[0]);
+const expression = ref(syntax.value.defaultExpression);
 const isBookmarked = ref(
-  checkBookmarkMembership(syntax.value.type, expression.value),
+  checkBookmarkMembership(syntax.value.kind, expression.value),
 );
 
 const descriptionResult = computed(() =>
   syntax.value.describe(expression.value),
 );
 
-function onSyntaxChange(type: CronSyntaxType) {
-  syntax.value = SYNTAX_LIST.find((s) => s.type === type)!;
-  expression.value = syntax.value.default;
+function onSyntaxChange(kind: CronSyntaxKind) {
+  syntax.value = CRON_SYNTAX_LIST.find((s) => s.kind === kind)!;
+  expression.value = syntax.value.defaultExpression;
 }
 
 function onExpressionChange(value: string) {
-  expression.value = formatExpression(value);
+  expression.value = value;
 }
 
 function toggleBookmark() {
-  const syntaxType = syntax.value.type;
+  const syntaxKind = syntax.value.kind;
 
   if (isBookmarked.value) {
-    removeBookmark(syntaxType, expression.value);
+    removeBookmark(syntaxKind, expression.value);
   } else {
-    addBookmark(syntaxType, expression.value);
+    addBookmark(syntaxKind, expression.value);
   }
 
   isBookmarked.value = !isBookmarked.value;
@@ -49,7 +46,11 @@ function toggleBookmark() {
   // TODO bookmark list
 }
 
-const selectedIndex = ref(-1);
+const selectedFieldIndex = ref(-1);
+const selectedField = computed(() => {
+  if (selectedFieldIndex.value === -1) return undefined;
+  return syntax.value.fields[selectedFieldIndex.value];
+});
 
 // NOTE this is a hacky solution to a problem that I don't know how to solve
 const fetchSelectionPositions = (input: HTMLInputElement) =>
@@ -65,48 +66,33 @@ const fetchSelectionPositions = (input: HTMLInputElement) =>
   );
 
 async function onPossibleCursorPositionChange() {
-  const input = document.getElementById("expressionInput") as HTMLInputElement;
+  const input = document.getElementById("expression-input") as HTMLInputElement;
 
   const getSelectedIndex = async () => {
     const { selectionStart, selectionEnd } =
       await fetchSelectionPositions(input);
 
-    return partitionExpression(expression.value)
-      .reduce(
-        (acc, x) => {
-          const lastEnd = acc.length === 0 ? 0 : acc[acc.length - 1][1];
-
-          acc.push([lastEnd, lastEnd + x.length + 1]);
-          return acc;
-        },
-        [] as [number, number][],
-      )
-      .findIndex(
-        ([start, end]) => start <= selectionStart && selectionEnd < end,
-      );
+    return getFieldIndices(input.value).findIndex(
+      ([start, end]) => start <= selectionStart && selectionEnd <= end,
+    );
   };
 
-  selectedIndex.value = await getSelectedIndex();
+  selectedFieldIndex.value = await getSelectedIndex();
 }
 
 function onFieldSelect(index: number) {
-  const input = document.getElementById("expressionInput") as HTMLInputElement;
+  const input = document.getElementById("expression-input") as HTMLInputElement;
 
   if (!input) return;
 
-  const partitions = partitionExpression(expression.value);
+  const partitionIndices = getFieldIndices(input.value);
+  if (index >= partitionIndices.length) return;
 
-  if (index >= partitions.length) return;
-
-  const offset =
-    partitions.reduce((acc, x, i) => (i < index ? acc + x.length : acc), 0) +
-    index;
-
-  const partition = partitions[index];
+  const [start, end] = partitionIndices[index];
   input.focus();
-  input.setSelectionRange(offset, offset + partition.length);
+  input.setSelectionRange(start, end);
 
-  selectedIndex.value = index;
+  selectedFieldIndex.value = index;
 }
 </script>
 
@@ -114,16 +100,17 @@ function onFieldSelect(index: number) {
   <main>
     <CronDescription
       :text="
-        descriptionResult.success ? descriptionResult.value.text : 'Unknown'
+        descriptionResult.ok
+          ? descriptionResult.val.text
+          : { source: 'Unknown' }
       "
-      :nextDates="
-        descriptionResult.success ? descriptionResult.value.nextDates : []
-      "
+      :selectedField="selectedField"
+      :nextDates="descriptionResult.ok ? descriptionResult.val.nextDates : []"
     />
     <CronForm
-      :syntaxKinds="SYNTAX_LIST"
+      :syntaxKinds="CRON_SYNTAX_LIST"
       :expression="expression"
-      :isValid="descriptionResult.success"
+      :isValid="descriptionResult.ok"
       :isBookmarked="isBookmarked"
       @update:expression="onExpressionChange"
       @update:syntax="onSyntaxChange"
@@ -133,11 +120,9 @@ function onFieldSelect(index: number) {
     />
     <CronFields
       :syntax="syntax"
-      :selectedIndex="selectedIndex"
+      :selectedFieldIndex="selectedFieldIndex"
       :invalidIndices="
-        descriptionResult.success
-          ? []
-          : descriptionResult.error.invalidFieldIndices
+        descriptionResult.ok ? [] : descriptionResult.val.invalidFieldIndices
       "
       @selected:field="onFieldSelect"
     />
