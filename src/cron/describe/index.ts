@@ -64,12 +64,17 @@ function describeField(
     )
     .with([{ kind: "VALUE" }, P.any], ([{ value }]) => format(fieldKind, value))
     .with(
+      [{ kind: "RANGE" }, { isRoot: true }],
+      ([{ from, to }]) =>
+        `of every ${format(fieldKind)} ${format(
+          fieldKind,
+          from,
+        )} through ${format(fieldKind, to)}`,
+    )
+    .with(
       [{ kind: "RANGE" }, P.any],
       ([{ from, to }]) =>
-        `${format(fieldKind)} ${format(fieldKind, from)} through ${format(
-          fieldKind,
-          to,
-        )}`,
+        `${format(fieldKind, from)} through ${format(fieldKind, to)}`,
     )
     .with([{ kind: "STEP" }, P.any], ([{ on, step }]) => {
       const word = step === 1 ? "every" : `of every ${formatInteger(step)}`;
