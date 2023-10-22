@@ -128,7 +128,7 @@ describe("UNIX", () => {
   it("lists with ranges", () => {
     expectText(
       "* 1-5,10-15 * * *",
-      "Every minute, of every hour 1 through 5 or of every hour 10 through 15, of every day-of-month, on any day-of-week, of every month.",
+      "Every minute, of hour 1 through 5 or 10 through 15, of every day-of-month, on any day-of-week, of every month.",
     );
   });
 
