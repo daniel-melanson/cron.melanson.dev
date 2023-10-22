@@ -44,12 +44,12 @@ describe("UNIX", () => {
   it("specific days", () => {
     expectText(
       "* * 15 * *",
-      "Every minute, of every hour, on the 15th of every month, on any day-of-week.",
+      "Every minute, of every hour, on the 15th, on any day-of-week, of every month.",
     );
 
     expectText(
       "* * 1 * *",
-      "Every minute, of every hour, on the 1st of every month, on any day-of-week.",
+      "Every minute, of every hour, on the 1st, on any day-of-week, of every month.",
     );
   });
 

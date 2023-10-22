@@ -184,9 +184,7 @@ function describeField(
 
   d.field(text, fieldKind);
 
-  m([fieldKind, match.kind])
-    .with([CronFieldKind.DAY_OF_MONTH, P.not("ANY")], () => d.spacing())
-    .otherwise(() => d.spacing(", "));
+  d.spacing(", ");
 
   return text;
 }
@@ -238,9 +236,24 @@ export function describeMatch(
 
   const processedEntries = describeTime(matches, d);
 
-  const entriesToProcess = matches.filter((e) => !processedEntries.includes(e));
-  for (let i = 0; i < entriesToProcess.length; i++) {
-    const match = entriesToProcess[i];
+  let unprocessedEntries = matches.filter(
+    (e) =>
+      !processedEntries.includes(e) &&
+      e.field.kind !== CronFieldKind.DAY_OF_WEEK,
+  );
+
+  const monthIndex = unprocessedEntries.findIndex(
+    (e) => e.field.kind === CronFieldKind.MONTH,
+  );
+
+  unprocessedEntries = [
+    ...unprocessedEntries.slice(0, monthIndex),
+    expression[CronFieldKind.DAY_OF_WEEK],
+    ...unprocessedEntries.slice(monthIndex),
+  ];
+
+  for (let i = 0; i < unprocessedEntries.length; i++) {
+    const match = unprocessedEntries[i];
     const isFirst = i === 0;
 
     describeField(d, match, { isFirst, isRoot: true });
