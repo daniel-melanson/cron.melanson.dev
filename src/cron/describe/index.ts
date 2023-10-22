@@ -42,6 +42,16 @@ function describeField(
             return "on every";
           },
         )
+        .with(
+          // NOTE This is a bug in the original implementation of cron that has now become standard
+          [
+            CronFieldKind.DAY_OF_WEEK,
+            P.when(({ [CronFieldKind.DAY_OF_MONTH]: dayOfMonth }) =>
+              dayOfMonth.source.startsWith("*"),
+            ),
+          ],
+          () => "that is a",
+        )
         .with([CronFieldKind.DAY_OF_WEEK, P.any], () => "or on any")
         .with([CronFieldKind.MONTH, P.any], () => "in")
         .with([CronFieldKind.DAY_OF_MONTH, P.any], () => "on the")
