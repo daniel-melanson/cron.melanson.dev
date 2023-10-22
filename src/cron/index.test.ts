@@ -116,7 +116,7 @@ describe("UNIX", () => {
 
     expectText(
       "* * 1,2,4 * *",
-      "Every minute, of every hour, of every day-of-month, on any day-of-week, of every month.",
+      "Every minute, of every hour, on the 1st, 2nd or 4th, on any day-of-week, of every month.",
     );
   });
 

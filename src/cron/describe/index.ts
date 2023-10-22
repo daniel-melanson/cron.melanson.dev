@@ -23,8 +23,37 @@ function describeField(
 ): string {
   const fieldKind = match.field.kind;
 
-  const text = m(match)
-    .with({ kind: "ANY" }, () =>
+  const text = m([match, options])
+    .with([{ kind: P.union("LIST", "VALUE") }, { isRoot: true }], () => {
+      const items = match.kind === "LIST" ? match.items : [match];
+      const list = items.map((item) =>
+        describeField(d, item, expression, { isListItem: true }),
+      );
+
+      const prefix = m([fieldKind, expression])
+        .with(
+          [
+            CronFieldKind.DAY_OF_WEEK,
+            { [CronFieldKind.DAY_OF_MONTH]: { kind: "ANY" } },
+          ],
+          () => {
+            d.removeField(CronFieldKind.DAY_OF_MONTH);
+
+            return "on every";
+          },
+        )
+        .with([CronFieldKind.DAY_OF_WEEK, P.any], () => "on")
+        .with([CronFieldKind.MONTH, P.any], () => "in")
+        .with([CronFieldKind.DAY_OF_MONTH, P.any], () => "on the")
+        .with([CronFieldKind.HOUR, P.any], () => "of hour")
+        .otherwise(() => format(fieldKind));
+
+      if (list.length === 1) return `${prefix} ${list[0]}`;
+
+      const last = list.pop();
+      return `${prefix} ${list.join(", ")} or ${last}`;
+    })
+    .with([{ kind: "ANY" }, P.any], () =>
       m(fieldKind)
         .with(CronFieldKind.DAY_OF_WEEK, () => "on any day-of-week")
         .otherwise(
@@ -33,55 +62,16 @@ function describeField(
             format(fieldKind),
         ),
     )
-    .with({ kind: "VALUE" }, ({ value }) =>
-      m([fieldKind, options, expression])
-        .with(
-          [CronFieldKind.MONTH, { isRoot: true }, P.any],
-          () => `in ${format(fieldKind, value)}`,
-        )
-        .with(
-          [CronFieldKind.DAY_OF_MONTH, P.any, P.any],
-          () => `on the ${format(fieldKind, value)}`,
-        )
-        .with(
-          [
-            CronFieldKind.DAY_OF_WEEK,
-            P.any,
-            { [CronFieldKind.DAY_OF_MONTH]: { kind: "ANY" } },
-          ],
-          () => {
-            d.removeField(CronFieldKind.DAY_OF_MONTH);
-
-            return `on every ${format(fieldKind, value)}`;
-          },
-        )
-        .with(
-          [CronFieldKind.DAY_OF_WEEK, P.any, P.any],
-          () => `on ${format(fieldKind, value)}`,
-        )
-        .with(
-          [CronFieldKind.HOUR, { isRoot: true }, P.any],
-          () => `of hour ${format(fieldKind, value)}`,
-        )
-        .otherwise(() => format(fieldKind, value)),
+    .with([{ kind: "VALUE" }, P.any], ([{ value }]) => format(fieldKind, value))
+    .with(
+      [{ kind: "RANGE" }, P.any],
+      ([{ from, to }]) =>
+        `${format(fieldKind)} ${format(fieldKind, from)} through ${format(
+          fieldKind,
+          to,
+        )}`,
     )
-    .with({ kind: "LIST" }, ({ items }) => {
-      const list = items.map((item) =>
-        describeField(d, item, expression, { isListItem: true }),
-      );
-
-      const last = list.pop();
-      return `of ${format(fieldKind)} ${list.join(", ")} or ${last}`;
-    })
-    .with({ kind: "RANGE" }, ({ from, to, separator }) => {
-      const prefix = separator === "-" ? "of every" : "a random";
-
-      return `${prefix} ${format(fieldKind)} ${format(
-        fieldKind,
-        from,
-      )} through ${format(fieldKind, to)}`;
-    })
-    .with({ kind: "STEP" }, ({ on, step }) => {
+    .with([{ kind: "STEP" }, P.any], ([{ on, step }]) => {
       const word = step === 1 ? "every" : `of every ${formatInteger(step)}`;
 
       if (on.kind === "ANY") return word + " " + format(fieldKind);
